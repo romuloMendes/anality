@@ -20,6 +20,7 @@
 **Anality** é uma aplicação web desenvolvida em Laravel que automatiza a coleta e análise de dados relacionados à segurança cibernética. O sistema cruza informações de ataques hackers com notícias relevantes, identificando correlações e padrões através de algoritmos inteligentes.
 
 ### 🎯 Objetivo Principal
+
 - **Cruzar dados** de ataques hackers com notícias
 - **Identificar correlações** entre eventos de segurança
 - **Gerar insights** através de dashboards interativos
@@ -32,9 +33,11 @@
 <div align="center">
 
 ### Dashboard Principal
+
 ![Dashboard Preview](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=Dashboard+Anality)
 
 ### Análise de Correlações
+
 ![Correlações Preview](https://via.placeholder.com/800x400/2d3748/ffffff?text=An%C3%A1lise+de+Correla%C3%A7%C3%B5es)
 
 </div>
@@ -44,30 +47,35 @@
 ## ✨ Funcionalidades
 
 ### 🔍 Web Scraping Inteligente
+
 - ✅ **CISA Alerts** - Alertas oficiais de segurança
 - ✅ **SecurityAffairs** - Notícias especializadas
 - ✅ **TechCrunch** - Cobertura tecnológica
 - ✅ **ZDNet** - Análises de segurança
 
 ### 📊 Análise de Correlações
+
 - ✅ **Algoritmo Multi-critério** (4 fatores ponderados)
 - ✅ **Score de Correlação** (0-100%)
 - ✅ **Tipos de Correlação**: Direct, Temporal, Entity-based
 - ✅ **Análise Temporal** até 7 dias
 
 ### 🎨 Dashboards Interativos
+
 - ✅ **Estatísticas em Tempo Real**
 - ✅ **Gráficos com Chart.js**
 - ✅ **Timeline Visual**
 - ✅ **Filtros Avançados**
 
 ### 🔧 API REST Completa
+
 - ✅ **Endpoints JSON**
 - ✅ **Status do Sistema**
 - ✅ **Scraping Automatizado**
 - ✅ **Análise Programática**
 
 ### 📱 Interface Moderna
+
 - ✅ **Bootstrap 5** - Design responsivo
 - ✅ **AJAX** - Atualizações dinâmicas
 - ✅ **Mobile-friendly**
@@ -78,6 +86,7 @@
 ## ⚡ Instalação
 
 ### Pré-requisitos
+
 - **PHP 8.2+**
 - **Composer**
 - **Laravel 12.x**
@@ -107,6 +116,7 @@ Acesse: **http://localhost:8000**
 ### 📋 Setup Detalhado
 
 Para instruções completas, consulte:
+
 - **[QUICKSTART.md](QUICKSTART.md)** - Guia de início rápido
 - **[README_ANALITY.md](README_ANALITY.md)** - Documentação técnica completa
 
@@ -115,23 +125,27 @@ Para instruções completas, consulte:
 ## 📊 Dashboard
 
 ### 🏠 Página Principal
+
 - **Estatísticas Gerais**: Ataques críticos, total de correlações
 - **Dados Recentes**: Últimos ataques e notícias
 - **Correlações Fortes**: Score > 70%
 - **Ações Rápidas**: Botões para scraping e análise
 
 ### 📈 Estatísticas Detalhadas
+
 - **Gráficos de Pizza**: Ataques por tipo
 - **Gráficos de Barras**: Distribuição por severidade
 - **Métricas**: Score médio de correlação
 
 ### 🔍 Filtros Avançados
+
 - **Por Severidade**: Critical, High, Medium, Low
 - **Por Tipo**: Ransomware, DDoS, Phishing, etc.
 - **Por Fonte**: CISA, SecurityAffairs, etc.
 - **Busca por Texto**: Título, descrição, entidade
 
 ### 📅 Timeline Visual
+
 - **Cronograma Cronológico**
 - **Eventos Ordenados** (mais recentes primeiro)
 - **Indicadores Visuais** por severidade
@@ -202,14 +216,15 @@ php artisan analysis:run --correlations
 
 O sistema utiliza um **algoritmo multi-critério** que pondera 4 fatores:
 
-| Fator | Peso | Descrição |
-|-------|------|-----------|
-| **Palavras-chave** | 30% | Similaridade de termos entre ataque e notícia |
-| **Temporal** | 20% | Proximidade até 7 dias |
-| **Entidades** | 25% | Menção da mesma empresa/entidade |
-| **Tipo** | 25% | Classificação de ataque |
+| Fator              | Peso | Descrição                                     |
+| ------------------ | ---- | --------------------------------------------- |
+| **Palavras-chave** | 30%  | Similaridade de termos entre ataque e notícia |
+| **Temporal**       | 20%  | Proximidade até 7 dias                        |
+| **Entidades**      | 25%  | Menção da mesma empresa/entidade              |
+| **Tipo**           | 25%  | Classificação de ataque                       |
 
 **Score Final**: 0-100%
+
 - **>70%**: Correlação forte
 - **40-70%**: Correlação média
 - **<40%**: Sem correlação
@@ -245,17 +260,20 @@ correlation_analyses (
 ## 🎨 Tecnologias Utilizadas
 
 ### Backend
+
 - **Laravel 12** - Framework PHP
 - **Symfony DomCrawler** - Web scraping
 - **Eloquent ORM** - Database layer
 
 ### Frontend
+
 - **Bootstrap 5** - CSS Framework
 - **Chart.js** - Data visualization
 - **Bootstrap Icons** - Icon library
 - **Blade Templates** - Template engine
 
 ### DevOps
+
 - **Composer** - PHP dependency manager
 - **Git** - Version control
 - **Laravel Artisan** - CLI tools
@@ -265,6 +283,7 @@ correlation_analyses (
 ## 📈 Roadmap
 
 ### Próximas Funcionalidades
+
 - [ ] **Integração VirusTotal** - API de análise de malware
 - [ ] **Machine Learning** - Classificação automática
 - [ ] **Export PDF/Excel** - Relatórios avançados
@@ -284,6 +303,7 @@ correlation_analyses (
 5. Abra um **Pull Request**
 
 ### Como Testar
+
 ```bash
 # Executar testes
 php artisan test
@@ -305,7 +325,7 @@ Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) par
 
 ## 👥 Autores
 
-- **Romulo** - *Desenvolvimento inicial* - [GitHub](https://github.com/romulo)
+- **Romulo** - _Desenvolvimento inicial_ - [GitHub](https://github.com/romulo)
 
 ---
 
