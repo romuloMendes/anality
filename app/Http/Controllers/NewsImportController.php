@@ -1,9 +1,9 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Services\NewsImportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 class NewsImportController extends Controller
@@ -32,24 +32,24 @@ class NewsImportController extends Controller
         $validated = $request->validate([
             'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:10240', // 10MB max
         ], [
-            'json_file.required' => 'Selecione um arquivo JSON',
-            'json_file.file' => 'O arquivo deve ser um arquivo válido',
-            'json_file.mimes' => 'O arquivo deve ser um JSON',
+            'json_file.required'  => 'Selecione um arquivo JSON',
+            'json_file.file'      => 'O arquivo deve ser um arquivo válido',
+            'json_file.mimes'     => 'O arquivo deve ser um JSON',
             'json_file.mimetypes' => 'O arquivo deve ser um JSON',
-            'json_file.max' => 'O arquivo não pode exceder 10MB',
+            'json_file.max'       => 'O arquivo não pode exceder 10MB',
         ]);
 
         try {
-            // Salvar arquivo temporário
-            $file = $request->file('json_file');
-            $tempPath = $file->store('imports/temp', 'local');
-            $fullPath = storage_path('app/' . $tempPath);
 
-            // Processar importação
-            $result = $this->importService->importFromJson($fullPath);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \RuntimeException('JSON inválido: ' . json_last_error_msg());
+            }
 
-            // Deletar arquivo temporário
-            Storage::delete($tempPath);
+            $file        = $request->file('json_file');
+            $jsonContent = File::get($file->getPathname());
+
+            // Processar importação usando conteúdo JSON, com hash no storage
+            $result = $this->importService->importJsonString($jsonContent);
 
             if ($result['success']) {
                 return redirect()->route('news-import.form')
@@ -63,8 +63,8 @@ class NewsImportController extends Controller
 
         } catch (\Exception $e) {
             // Limpar arquivo temporário em caso de erro
-            if (isset($fullPath) && file_exists($fullPath)) {
-                unlink($fullPath);
+            if (isset($storedPath) && Storage::disk('local')->exists($storedPath)) {
+                Storage::disk('local')->delete($storedPath);
             }
 
             return redirect()->route('news-import.form')
@@ -82,24 +82,20 @@ class NewsImportController extends Controller
         ]);
 
         try {
-            $file = $request->file('json_file');
-            $tempPath = $file->store('imports/temp', 'local');
-            $fullPath = storage_path('app/' . $tempPath);
-
-            $result = $this->importService->importFromJson($fullPath);
-
-            Storage::delete($tempPath);
+            $file        = $request->file('json_file');
+            $jsonContent = File::get($file->getPathname());
+            $result      = $this->importService->importJsonString($jsonContent);
 
             return response()->json($result, $result['success'] ? 200 : 422);
 
         } catch (\Exception $e) {
-            if (isset($fullPath) && file_exists($fullPath)) {
-                unlink($fullPath);
+            if (isset($storedPath) && Storage::disk('local')->exists($storedPath)) {
+                Storage::disk('local')->delete($storedPath);
             }
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
