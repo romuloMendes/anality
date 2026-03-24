@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NewsImportController;
+use Illuminate\Support\Facades\Route;
 
 // Dashboard e visualizações
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -25,4 +25,11 @@ Route::prefix('admin/news')->group(function () {
     Route::get('/import', [NewsImportController::class, 'showForm'])->name('news-import.form');
     Route::post('/import', [NewsImportController::class, 'import'])->name('news-import.process');
     Route::post('/import/api', [NewsImportController::class, 'importApi'])->name('news-import.api');
+});
+
+// Importação de ataques
+Route::prefix('admin/attacks')->group(function () {
+    Route::get('/import', [\App\Http\Controllers\AttackImportController::class, 'showForm'])->name('attacks-import.form');
+    Route::post('/import', [\App\Http\Controllers\AttackImportController::class, 'import'])->name('attacks-import.process');
+    Route::post('/import/api', [\App\Http\Controllers\AttackImportController::class, 'importApi'])->name('attacks-import.api');
 });

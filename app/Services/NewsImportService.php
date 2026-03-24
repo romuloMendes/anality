@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class NewsImportService
 {
@@ -262,6 +263,45 @@ class NewsImportService
         return array_keys(array_slice($frequencies, 0, $limit));
     }
 
+    private function extractTags(string $text, int $limit = 5): array
+    {
+        $attackKeywords = [
+            'ransomware', 'ddos', 'phishing', 'malware', 'breach', 'exploit', 'vulnerability',
+            'microsoft', 'apple', 'google', 'amazon', 'hospital', 'government', 'bank',
+            'cryptolocker', 'worm', 'trojan', 'botnet', 'spyware', 'adware', 'rootkit',
+            'http', 'flood', 'sql', 'injection', 'xss', 'csrf', 'zero', 'day',
+        ];
+
+        $stopwords = [
+            'a', 'o', 'e', 'de', 'da', 'do', 'em', 'para', 'com', 'por', 'que', 'por', 'se',
+            'não', 'é', 'são', 'ser', 'tem', 'tinha', 'sido', 'já', 'também', 'mais',
+        ];
+
+        $tags      = [];
+        $textLower = strtolower($text);
+
+        // Buscar palavras-chave de ataque conhecidas
+        foreach ($attackKeywords as $keyword) {
+            if (strpos($textLower, $keyword) !== false) {
+                $tags[] = $keyword;
+            }
+        }
+
+        // Se não encontrou keywords de ataque, extrair palavras mais relevantes
+        if (empty($tags)) {
+            $words = preg_split('/[\s\W]+/', $textLower, -1, PREG_SPLIT_NO_EMPTY);
+            $words = array_filter($words, function ($word) use ($stopwords) {
+                return strlen($word) > 3 && ! in_array($word, $stopwords);
+            });
+
+            $frequencies = array_count_values($words);
+            arsort($frequencies);
+            $tags = array_keys(array_slice($frequencies, 0, $limit));
+        }
+
+        return array_unique(array_slice($tags, 0, $limit));
+    }
+
     private function calculateRelevanceScore(string $text): float
     {
         $lengthScore = min(100, (strlen($text) / 50) * 10);
@@ -287,5 +327,163 @@ class NewsImportService
         $finalScore = (($lengthScore * 0.4) + ($keywordScore * 0.6));
 
         return min(100, round($finalScore, 2));
+    }
+
+    public function importAttacksFromJsonString(string $jsonContent): array
+    {
+        $hashName   = $this->generateHashName();
+        $storedPath = "imports/temp/{$hashName}.json";
+
+        Storage::disk('local')->put($storedPath, $jsonContent);
+
+        $result = $this->importAttacksFromJson($storedPath);
+
+        Storage::disk('local')->delete($storedPath);
+
+        return $result;
+    }
+
+    private function importAttacksFromJson(string $storedPath): array
+    {
+        try {
+            if (Str::startsWith($storedPath, ['/', '\\'])) {
+                $filePath = $storedPath;
+            } else {
+                $filePath = Storage::disk('local')->path($storedPath);
+            }
+
+            if (! File::exists($filePath)) {
+                throw new \Exception('Arquivo JSON não encontrado: ' . $filePath);
+            }
+
+            $jsonContent = File::get($filePath);
+            $decoded     = json_decode($jsonContent, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('JSON inválido: ' . json_last_error_msg());
+            }
+
+            if (! is_array($decoded)) {
+                throw new \Exception('Formato de JSON inesperado. Deve ser array de objetos.');
+            }
+
+            $rowNumber = 0;
+            foreach ($decoded as $item) {
+                $rowNumber++;
+
+                try {
+                    if (! is_array($item)) {
+                        throw new \Exception('Formato de item inválido na linha ' . $rowNumber);
+                    }
+
+                    $this->processAttackData($item, basename($filePath));
+                    $this->imported++;
+                } catch (\Exception $e) {
+                    dd($e);
+                    $this->failed++;
+                    $this->errors[] = "Linha {$rowNumber}: " . $e->getMessage();
+                    Log::error("Erro na importação de ataque JSON (linha {$rowNumber})", [
+                        'error' => $e->getMessage(),
+                        'item'  => $item,
+                    ]);
+                }
+            }
+
+            return [
+                'success'  => true,
+                'imported' => $this->imported,
+                'failed'   => $this->failed,
+                'errors'   => $this->errors,
+                'total'    => $this->imported + $this->failed,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao importar JSON de ataques', [
+                'error' => $e->getMessage(),
+                'file'  => $storedPath,
+            ]);
+
+            return [
+                'success'  => false,
+                'error'    => $e->getMessage(),
+                'imported' => $this->imported,
+                'failed'   => $this->failed,
+            ];
+        }
+    }
+
+    private function processAttackData(array $data, string $sourceFile): void
+    {
+        $title          = trim($data['title'] ?? ($data['tipo_ataque'] ?? 'Ataque Desconhecido'));
+        $description    = trim($data['summary'] ?? ($data['descricao'] ?? ''));
+        $attackType     = trim($data['tipo_ataque'] ?? ($data['type'] ?? ($data['attack_type'] ?? 'Other')));
+        $severity       = $this->normalizeSeverity($data['severity'] ?? $data['ataques'] ?? ($data['rating'] ?? 'low'));
+        $affectedEntity = trim($data['pais_alvo'] ?? $data['affected_entity'] ?? null);
+        $originCountry  = trim($data['pais_origem'] ?? $data['source_name'] ?? null);
+        $attackDate     = trim($data['data'] ?? ($data['date'] ?? ($data['attack_date'] ?? '')));
+
+        if (empty($attackDate)) {
+            throw new \Exception('Data do ataque é obrigatória');
+        }
+        $attackDate = $this->convertToDate($attackDate);
+        if (empty($attackDate)) {
+            throw new \Exception('Data do ataque é obrigatória');
+        }
+
+        // $exists = \App\Models\HackerAttack::where('title', $title)
+        //     ->where('attack_date', $attackDate)
+        //     ->exists();
+
+        // if ($exists) {
+        //     throw new \Exception('Ataque duplicado');
+        // }
+
+        \App\Models\HackerAttack::create([
+            'title'           => $title,
+            'description'     => $description,
+            'attack_type'     => $attackType,
+            'severity'        => $severity,
+            'affected_entity' => $affectedEntity,
+            'attack_date'     => $attackDate,
+            'source_name'     => $data['source_name'] ?? 'log_dos_ataques',
+            'source_url'      => $data['source_url'] ?? null,
+            'tags'            => $this->extractTags($title . ' ' . $description),
+            'metadata'        => [
+                'imported_at' => now(),
+                'source_file' => $sourceFile,
+            ],
+        ]);
+    }
+
+    private function convertToDate(string $datetime): string
+    {
+        try {
+            return Carbon::parse($datetime)->toDateString();
+        } catch (\Exception $e) {
+            return null;
+            // throw new \Exception("Data inválida: {$datetime}");
+        }
+    }
+    private function normalizeSeverity($rawSeverity): string
+    {
+        if (is_numeric($rawSeverity)) {
+            $value = (float) $rawSeverity;
+            return match (true) {
+                $value >= 0.75 => 'critical',
+                $value >= 0.5  => 'high',
+                $value >= 0.25 => 'medium',
+                default        => 'low',
+            };
+        }
+
+        $level = strtolower(trim((string) $rawSeverity));
+
+        return match ($level) {
+            'critical', 'critico', 'crítico' => 'critical',
+            'high', 'alto'    => 'high',
+            'medium', 'médio' => 'medium',
+            'low', 'baixo'    => 'low',
+            default => 'low',
+        };
     }
 }
