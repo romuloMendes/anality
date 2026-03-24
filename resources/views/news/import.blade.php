@@ -9,7 +9,7 @@
                     <h1 class="h2 mb-2">
                         <i class="bi bi-upload"></i> Importar Notícias
                     </h1>
-                    <p class="text-muted">Faça upload de um arquivo CSV para importar notícias para o sistema</p>
+                    <p class="text-muted">Faça upload de um arquivo JSON para importar notícias para o sistema</p>
                 </div>
 
                 <!-- Alertas de sucesso/erro -->
@@ -74,8 +74,8 @@
 
                             <!-- Informações sobre formato -->
                             <div class="alert alert-info mb-4">
-                                <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Formato do Arquivo CSV</h6>
-                                <p class="mb-2">Seu arquivo CSV deve ter as seguintes colunas:</p>
+                                <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Formato do Arquivo JSON</h6>
+                                <p class="mb-2">Seu arquivo JSON deve ser um array de objetos com os campos:</p>
                                 <ul class="mb-0">
                                     <li><strong>title</strong> - Título da notícia (obrigatório)</li>
                                     <li><strong>summary</strong> - Resumo/Conteúdo da notícia</li>
@@ -84,20 +84,20 @@
                                 <p class="mt-3 mb-0">
                                     <small>
                                         <strong>Exemplo:</strong>
-                                        <code>title;summary;date</code>
+                                        <code>[{"title":"...","summary":"...","date":"31.dez.2022 às 23h15"}]</code>
                                     </small>
                                 </p>
                             </div>
 
                             <!-- Upload de arquivo -->
                             <div class="mb-4">
-                                <label for="csv_file" class="form-label fw-semibold">
-                                    <i class="bi bi-file-earmark-csv"></i> Selecione o arquivo CSV
+                                <label for="json_file" class="form-label fw-semibold">
+                                    <i class="bi bi-file-earmark-text"></i> Selecione o arquivo JSON
                                 </label>
                                 <div class="position-relative">
                                     <input type="file"
-                                        class="form-control form-control-lg @error('csv_file') is-invalid @enderror"
-                                        id="csv_file" name="csv_file" accept=".csv,.txt" required
+                                        class="form-control form-control-lg @error('json_file') is-invalid @enderror"
+                                        id="json_file" name="json_file" accept=".json,.txt" required
                                         onchange="updateFileName(this)">
                                     <small class="form-text text-muted d-block mt-2">
                                         Formatos aceitos: CSV, TXT | Tamanho máximo: 10MB

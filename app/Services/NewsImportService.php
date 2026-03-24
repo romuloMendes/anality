@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\News;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -67,11 +68,77 @@ class NewsImportService
         }
     }
 
+    public function importFromJson(string $filePath): array
+    {
+        try {
+            if (!File::exists($filePath)) {
+                throw new \Exception('Arquivo JSON não encontrado');
+            }
+
+            $jsonContent = File::get($filePath);
+            $decoded = json_decode($jsonContent, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('JSON inválido: ' . json_last_error_msg());
+            }
+
+            if (!is_array($decoded)) {
+                throw new \Exception('Formato de JSON inesperado. Deve ser array de objetos.');
+            }
+
+            $rowNumber = 0;
+            foreach ($decoded as $item) {
+                $rowNumber++;
+
+                try {
+                    if (!is_array($item)) {
+                        throw new \Exception('Formato de item inválido na linha '.$rowNumber);
+                    }
+
+                    $this->processData($item, 'log_das_noticias.json');
+                    $this->imported++;
+                } catch (\Exception $e) {
+                    $this->failed++;
+                    $this->errors[] = "Linha {$rowNumber}: " . $e->getMessage();
+                    Log::error("Erro na importação de notícia JSON (linha {$rowNumber})", [
+                        'error' => $e->getMessage(),
+                        'item' => $item
+                    ]);
+                }
+            }
+
+            return [
+                'success' => true,
+                'imported' => $this->imported,
+                'failed' => $this->failed,
+                'errors' => $this->errors,
+                'total' => $this->imported + $this->failed,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao importar JSON de notícias', [
+                'error' => $e->getMessage(),
+                'file' => $filePath
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'imported' => $this->imported,
+                'failed' => $this->failed,
+            ];
+        }
+    }
+
     private function processRow(array $row, array $header): void
     {
         // Mapear dados da linha com os cabeçalhos
         $data = array_combine($header, $row);
+        $this->processData($data, 'log_das_noticias.csv');
+    }
 
+    private function processData(array $data, string $sourceFile): void
+    {
         // Validar campos obrigatórios
         $title = trim($data['title'] ?? '');
         $summary = trim($data['summary'] ?? '');
@@ -108,12 +175,12 @@ class NewsImportService
             'source_name' => 'Folha de S.Paulo',
             'source_url' => null,
             'published_date' => $publishedDate,
-            'category' => 'Politics', // Categoria padrão baseada no CSV
+            'category' => 'Politics',
             'keywords' => $keywords,
             'relevance_score' => $this->calculateRelevanceScore($summary),
             'metadata' => [
                 'imported_at' => now(),
-                'source_file' => 'log_das_noticias.csv',
+                'source_file' => $sourceFile,
             ],
         ]);
     }

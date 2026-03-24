@@ -24,28 +24,29 @@ class NewsImportController extends Controller
     }
 
     /**
-     * Processar upload e importação de CSV
+     * Processar upload e importação de JSON
      */
     public function import(Request $request)
     {
         // Validação do arquivo
         $validated = $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:10240', // 10MB max
+            'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:10240', // 10MB max
         ], [
-            'csv_file.required' => 'Selecione um arquivo CSV',
-            'csv_file.file' => 'O arquivo deve ser um arquivo válido',
-            'csv_file.mimes' => 'O arquivo deve ser um CSV',
-            'csv_file.max' => 'O arquivo não pode exceder 10MB',
+            'json_file.required' => 'Selecione um arquivo JSON',
+            'json_file.file' => 'O arquivo deve ser um arquivo válido',
+            'json_file.mimes' => 'O arquivo deve ser um JSON',
+            'json_file.mimetypes' => 'O arquivo deve ser um JSON',
+            'json_file.max' => 'O arquivo não pode exceder 10MB',
         ]);
 
         try {
             // Salvar arquivo temporário
-            $file = $request->file('csv_file');
+            $file = $request->file('json_file');
             $tempPath = $file->store('imports/temp', 'local');
             $fullPath = storage_path('app/' . $tempPath);
 
             // Processar importação
-            $result = $this->importService->importFromCSV($fullPath);
+            $result = $this->importService->importFromJson($fullPath);
 
             // Deletar arquivo temporário
             Storage::delete($tempPath);
@@ -77,15 +78,15 @@ class NewsImportController extends Controller
     public function importApi(Request $request)
     {
         $validated = $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:10240',
+            'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:10240',
         ]);
 
         try {
-            $file = $request->file('csv_file');
+            $file = $request->file('json_file');
             $tempPath = $file->store('imports/temp', 'local');
             $fullPath = storage_path('app/' . $tempPath);
 
-            $result = $this->importService->importFromCSV($fullPath);
+            $result = $this->importService->importFromJson($fullPath);
 
             Storage::delete($tempPath);
 
