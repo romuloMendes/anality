@@ -76,7 +76,20 @@
                         <a class="nav-link {{ request()->routeIs('timeline') ? 'active' : '' }}"
                             href="{{ route('timeline') }}">Timeline</a>
                     </li>
-                </ul>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-gear"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('news-import.form') ? 'active' : '' }}"
+                                    href="{{ route('news-import.form') }}">
+                                    <i class="bi bi-upload"></i> Importar Notícias
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
             </div>
         </div>
     </nav>

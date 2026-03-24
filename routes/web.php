@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\NewsImportController;
 
 // Dashboard e visualizações
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -18,3 +19,10 @@ Route::post('/api/scrape/news', [AnalysisController::class, 'scrapeNews'])->name
 Route::post('/api/analyze/correlations', [AnalysisController::class, 'runCorrelationAnalysis'])->name('analyze-correlations');
 Route::post('/api/analyze/full', [AnalysisController::class, 'runFullAnalysis'])->name('full-analysis');
 Route::get('/api/status', [AnalysisController::class, 'status'])->name('api-status');
+
+// Importação de notícias
+Route::prefix('admin/news')->group(function () {
+    Route::get('/import', [NewsImportController::class, 'showForm'])->name('news-import.form');
+    Route::post('/import', [NewsImportController::class, 'import'])->name('news-import.process');
+    Route::post('/import/api', [NewsImportController::class, 'importApi'])->name('news-import.api');
+});
