@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\AttackReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NewsImportController;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,7 @@ Route::get('/correlations', [DashboardController::class, 'correlations'])->name(
 Route::get('/attacks', [DashboardController::class, 'attacks'])->name('attacks');
 Route::get('/attacks/{id}', [DashboardController::class, 'attackDetail'])->name('attack-detail');
 Route::get('/timeline', [DashboardController::class, 'timeline'])->name('timeline');
+Route::get('/report/attacks', [AttackReportController::class, 'view'])->name('report-attacks-view');
 
 // APIs para análise e scraping
 Route::post('/api/scrape/attacks', [AnalysisController::class, 'scrapeAttacks'])->name('scrape-attacks');
@@ -32,4 +34,11 @@ Route::prefix('admin/attacks')->group(function () {
     Route::get('/import', [\App\Http\Controllers\AttackImportController::class, 'showForm'])->name('attacks-import.form');
     Route::post('/import', [\App\Http\Controllers\AttackImportController::class, 'import'])->name('attacks-import.process');
     Route::post('/import/api', [\App\Http\Controllers\AttackImportController::class, 'importApi'])->name('attacks-import.api');
+});
+
+// Relatórios de ataques
+Route::prefix('api/reports/attacks')->group(function () {
+    Route::get('/weekly', [AttackReportController::class, 'weeklyReport'])->name('report-attacks-weekly');
+    Route::get('/daily', [AttackReportController::class, 'dailyReport'])->name('report-attacks-daily');
+    Route::get('/export/weekly', [AttackReportController::class, 'exportWeekly'])->name('export-report-attacks-weekly');
 });
