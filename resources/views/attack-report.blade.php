@@ -228,5 +228,3 @@
         }
     </style>
 @endsection
-
-{{-- @endsection --}}
