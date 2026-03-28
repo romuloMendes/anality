@@ -88,6 +88,12 @@
                                     <i class="bi bi-upload"></i> Importar Notícias
                                 </a>
                             </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('attacks-import.form') ? 'active' : '' }}"
+                                    href="{{ route('attacks-import.form') }}">
+                                    <i class="bi bi-upload"></i> Importar Ataques
+                                </a>
+                            </li>
                         </ul>
                     </li>
             </div>
