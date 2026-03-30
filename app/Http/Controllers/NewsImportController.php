@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Services\NewsImportService;
@@ -30,13 +31,13 @@ class NewsImportController extends Controller
     {
         // Validação do arquivo
         $validated = $request->validate([
-            'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:10240', // 10MB max
+            'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:51200', // 50MB max
         ], [
             'json_file.required'  => 'Selecione um arquivo JSON',
             'json_file.file'      => 'O arquivo deve ser um arquivo válido',
             'json_file.mimes'     => 'O arquivo deve ser um JSON',
             'json_file.mimetypes' => 'O arquivo deve ser um JSON',
-            'json_file.max'       => 'O arquivo não pode exceder 10MB',
+            'json_file.max'       => 'O arquivo não pode exceder 50MB',
         ]);
 
         try {
@@ -60,7 +61,6 @@ class NewsImportController extends Controller
                     ->with('error', 'Erro na importação: ' . $result['error'])
                     ->with('import_result', $result);
             }
-
         } catch (\Exception $e) {
             // Limpar arquivo temporário em caso de erro
             if (isset($storedPath) && Storage::disk('local')->exists($storedPath)) {
@@ -78,7 +78,7 @@ class NewsImportController extends Controller
     public function importApi(Request $request)
     {
         $validated = $request->validate([
-            'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:10240',
+            'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:51200',
         ]);
 
         try {
@@ -87,7 +87,6 @@ class NewsImportController extends Controller
             $result      = $this->importService->importJsonString($jsonContent);
 
             return response()->json($result, $result['success'] ? 200 : 422);
-
         } catch (\Exception $e) {
             if (isset($storedPath) && Storage::disk('local')->exists($storedPath)) {
                 Storage::disk('local')->delete($storedPath);
