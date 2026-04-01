@@ -52,15 +52,25 @@
 
                             <div class="alert alert-info mb-4">
                                 <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Formato do Arquivo JSON</h6>
-                                <p class="mb-2">Seu arquivo JSON deve ser um array de objetos com as chaves:</p>
-                                <ul class="mb-0">
+                                <p class="mb-2">Seu arquivo JSON deve ser um array de objetos com os campos:</p>
+                                <ul class="mb-3">
                                     <li><strong>title</strong> - Título do ataque (obrigatório)</li>
-                                    <li><strong>summary</strong> - Descrição do ataque</li>
-                                    <li><strong>date</strong> - Data do ataque (ex: 31.dez.2022 às 23h15)</li>
+                                    <li><strong>summary</strong> - Descrição/conteúdo do ataque</li>
+                                    <li><strong>date</strong> - Data do ataque (ex: <code>31.dez.2022 às 23h15</code>)</li>
                                 </ul>
-                                <p class="mt-3 mb-0"><small><strong>Exemplo:</strong>
-                                        <code>[{"title":"...","summary":"...","date":"31.dez.2022 às 23h15"}]</code></small>
-                                </p>
+                                <p class="mb-1"><strong>Exemplo:</strong></p>
+                                <pre class="mb-0 p-2 bg-white border rounded small">[
+  {
+    "title": "A surpreendente recuperação do emprego no Brasil",
+    "summary": "Adicionalmente, os efeitos defasados da política monetária, estimulativa até meados de 2022, ajudaram a impulsionar a atividade econômica e, por consequência, o mercado de trabalho. ...",
+    "date": "31.dez.2022 às 23h15"
+  },
+  {
+    "title": "Entenda o mundo em 2022 com livros, séries, filmes e podcasts indicados pela Folha",
+    "summary": "Crítico literário e autor irlandês, O'Toole, 64, é um dos meus comentaristas favoritos sobre política e cultura americanas. ...",
+    "date": "31.dez.2022 às 23h15"
+  }
+]</pre>
                             </div>
 
                             <!-- Upload de arquivo -->

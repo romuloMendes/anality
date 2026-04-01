@@ -9,7 +9,7 @@
                     <h1 class="h2 mb-2">
                         <i class="bi bi-upload"></i> Importar Notícias
                     </h1>
-                    <p class="text-muted">Faça upload de um arquivo JSON para importar notícias para o sistema</p>
+                    <p class="text-muted">Faça upload de um arquivo JSON para para o sistema</p>
                 </div>
 
                 <!-- Alertas de sucesso/erro -->
