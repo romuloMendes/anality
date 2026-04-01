@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\News;
@@ -51,7 +52,6 @@ class NewsImportService
                 'errors'   => $this->errors,
                 'total'    => $this->imported + $this->failed,
             ];
-
         } catch (\Exception $e) {
             Log::error('Erro ao importar CSV de notícias', [
                 'error' => $e->getMessage(),
@@ -115,7 +115,6 @@ class NewsImportService
                 'errors'   => $this->errors,
                 'total'    => $this->imported + $this->failed,
             ];
-
         } catch (\Exception $e) {
             Log::error('Erro ao importar JSON de notícias', [
                 'error' => $e->getMessage(),
@@ -214,18 +213,30 @@ class NewsImportService
                 $minute   = $matches[5];
 
                 $months = [
-                    'jan' => 1, 'janeiro'   => 1,
-                    'fev' => 2, 'fevereiro' => 2,
-                    'mar' => 3, 'março'     => 3,
-                    'abr' => 4, 'abril'     => 4,
-                    'mai' => 5, 'maio'      => 5,
-                    'jun' => 6, 'junho'     => 6,
-                    'jul' => 7, 'julho'     => 7,
-                    'ago' => 8, 'agosto'    => 8,
-                    'set' => 9, 'setembro'  => 9,
-                    'out' => 10, 'outubro'  => 10,
-                    'nov' => 11, 'novembro' => 11,
-                    'dez' => 12, 'dezembro' => 12,
+                    'jan' => 1,
+                    'janeiro'   => 1,
+                    'fev' => 2,
+                    'fevereiro' => 2,
+                    'mar' => 3,
+                    'março'     => 3,
+                    'abr' => 4,
+                    'abril'     => 4,
+                    'mai' => 5,
+                    'maio'      => 5,
+                    'jun' => 6,
+                    'junho'     => 6,
+                    'jul' => 7,
+                    'julho'     => 7,
+                    'ago' => 8,
+                    'agosto'    => 8,
+                    'set' => 9,
+                    'setembro'  => 9,
+                    'out' => 10,
+                    'outubro'  => 10,
+                    'nov' => 11,
+                    'novembro' => 11,
+                    'dez' => 12,
+                    'dezembro' => 12,
                 ];
 
                 $month = $months[strtolower($monthStr)] ?? null;
@@ -237,7 +248,6 @@ class NewsImportService
             }
 
             return Carbon::parse($dateString);
-
         } catch (\Exception $e) {
             throw new \Exception("Data inválida: {$dateString}");
         }
@@ -246,10 +256,47 @@ class NewsImportService
     private function extractKeywords(string $text, int $limit = 10): array
     {
         $stopwords = [
-            'a', 'o', 'e', 'de', 'da', 'do', 'em', 'para', 'com', 'por', 'que', 'por', 'se',
-            'não', 'é', 'são', 'ser', 'tem', 'tinha', 'sido', 'já', 'também', 'mais',
-            'uma', 'um', 'he', 'ela', 'aos', 'as', 'os', 'ele', 'seu', 'sua', 'seu',
-            'aos', 'às', 'como', 'este', 'esse', 'aquele', 'este',
+            'a',
+            'o',
+            'e',
+            'de',
+            'da',
+            'do',
+            'em',
+            'para',
+            'com',
+            'por',
+            'que',
+            'por',
+            'se',
+            'não',
+            'é',
+            'são',
+            'ser',
+            'tem',
+            'tinha',
+            'sido',
+            'já',
+            'também',
+            'mais',
+            'uma',
+            'um',
+            'he',
+            'ela',
+            'aos',
+            'as',
+            'os',
+            'ele',
+            'seu',
+            'sua',
+            'seu',
+            'aos',
+            'às',
+            'como',
+            'este',
+            'esse',
+            'aquele',
+            'este',
         ];
 
         $words = preg_split('/[\s\W]+/', strtolower($text), -1, PREG_SPLIT_NO_EMPTY);
@@ -266,15 +313,61 @@ class NewsImportService
     private function extractTags(string $text, int $limit = 5): array
     {
         $attackKeywords = [
-            'ransomware', 'ddos', 'phishing', 'malware', 'breach', 'exploit', 'vulnerability',
-            'microsoft', 'apple', 'google', 'amazon', 'hospital', 'government', 'bank',
-            'cryptolocker', 'worm', 'trojan', 'botnet', 'spyware', 'adware', 'rootkit',
-            'http', 'flood', 'sql', 'injection', 'xss', 'csrf', 'zero', 'day',
+            'ransomware',
+            'ddos',
+            'phishing',
+            'malware',
+            'breach',
+            'exploit',
+            'vulnerability',
+            'microsoft',
+            'apple',
+            'google',
+            'amazon',
+            'hospital',
+            'government',
+            'bank',
+            'cryptolocker',
+            'worm',
+            'trojan',
+            'botnet',
+            'spyware',
+            'adware',
+            'rootkit',
+            'http',
+            'flood',
+            'sql',
+            'injection',
+            'xss',
+            'csrf',
+            'zero',
+            'day',
         ];
 
         $stopwords = [
-            'a', 'o', 'e', 'de', 'da', 'do', 'em', 'para', 'com', 'por', 'que', 'por', 'se',
-            'não', 'é', 'são', 'ser', 'tem', 'tinha', 'sido', 'já', 'também', 'mais',
+            'a',
+            'o',
+            'e',
+            'de',
+            'da',
+            'do',
+            'em',
+            'para',
+            'com',
+            'por',
+            'que',
+            'por',
+            'se',
+            'não',
+            'é',
+            'são',
+            'ser',
+            'tem',
+            'tinha',
+            'sido',
+            'já',
+            'também',
+            'mais',
         ];
 
         $tags      = [];
@@ -396,7 +489,6 @@ class NewsImportService
                 'errors'   => $this->errors,
                 'total'    => $this->imported + $this->failed,
             ];
-
         } catch (\Exception $e) {
             Log::error('Erro ao importar JSON de ataques', [
                 'error' => $e->getMessage(),
@@ -455,7 +547,7 @@ class NewsImportService
         ]);
     }
 
-    private function convertToDate(string $datetime): string
+    private function convertToDate(string $datetime): ?string
     {
         try {
             return Carbon::parse($datetime)->toDateString();
