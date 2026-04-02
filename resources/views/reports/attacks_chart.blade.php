@@ -520,6 +520,7 @@
 
     <script>
         const API_URL = '{{ route('report-attacks-weekly') }}';
+        const PERIOD_NEWS_URL = '{{ route('report-attacks-period-news') }}';
         const EXPORT_URL = '{{ route('export-report-attacks-weekly') }}';
         const DEFAULT_FROM = '{{ $from->toDateString() }}';
         const DEFAULT_TO = '{{ $to->toDateString() }}';
@@ -553,14 +554,32 @@
         }
 
         function showNewsPanel(row) {
-            $('#news-panel-title').text('Notícias do período — ' + row.period + ' a ' + row.end_date.split('-').reverse()
-                .join('/'));
-            renderNewsList('news-minus7-list', row.news_minus7);
-            renderNewsList('news-plus7-list', row.news_plus7);
+            const label = 'Notícias do período — ' + row.period + ' a ' + row.end_date.split('-').reverse().join('/');
+            $('#news-panel-title').text(label);
+            $('#news-minus7-list').html('<div class="news-empty">Carregando...</div>');
+            $('#news-plus7-list').html('<div class="news-empty">Carregando...</div>');
             $('#news-panel').slideDown(200);
             $('html, body').animate({
                 scrollTop: $('#news-panel').offset().top - 20
             }, 300);
+
+            $.ajax({
+                    url: PERIOD_NEWS_URL,
+                    data: {
+                        start: row.start_date,
+                        end: row.end_date
+                    },
+                    dataType: 'json',
+                    timeout: 20000,
+                })
+                .done(function(data) {
+                    renderNewsList('news-minus7-list', data.news_minus7);
+                    renderNewsList('news-plus7-list', data.news_plus7);
+                })
+                .fail(function() {
+                    $('#news-minus7-list').html('<div class="news-empty">Erro ao carregar notícias.</div>');
+                    $('#news-plus7-list').html('<div class="news-empty">Erro ao carregar notícias.</div>');
+                });
         }
 
         /* ── KPIs ─────────────────────────────────────────────── */
@@ -568,7 +587,7 @@
             const totalAttacks = data.total;
             const periods = data.rows.length;
             const totalNews = data.rows.reduce(function(acc, r) {
-                return acc + r.news_minus7.length + r.news_plus7.length;
+                return acc + (r.news_minus7_count || 0) + (r.news_plus7_count || 0);
             }, 0);
             const peak = data.rows.reduce(function(max, r) {
                 return r.attack_count > max ? r.attack_count : max;
@@ -592,10 +611,10 @@
                 return r.attack_count;
             });
             const minus7 = data.rows.map(function(r) {
-                return r.news_minus7.length;
+                return r.news_minus7_count || 0;
             });
             const plus7 = data.rows.map(function(r) {
-                return r.news_plus7.length;
+                return r.news_plus7_count || 0;
             });
             const bgColors = counts.map(getBarColor);
 
@@ -758,9 +777,14 @@
             url.searchParams.set('to', to);
             window.history.replaceState({}, '', url);
 
-            $.getJSON(API_URL, {
-                    from: from,
-                    to: to
+            $.ajax({
+                    url: API_URL,
+                    data: {
+                        from: from,
+                        to: to
+                    },
+                    dataType: 'json',
+                    timeout: 30000,
                 })
                 .done(function(data) {
                     $('#chart-loader').hide();
@@ -770,9 +794,13 @@
                     }
                     buildChart(data);
                 })
-                .fail(function() {
+                .fail(function(jqXHR, status) {
                     $('#chart-loader').hide();
-                    $('#error-msg').text('Erro ao buscar os dados. Verifique os parâmetros e tente novamente.').show();
+                    const msg = status === 'timeout' ?
+                        'A requisição demorou muito. Tente um período menor.' :
+                        'Erro ao buscar os dados (' + (jqXHR.status || status) +
+                        '). Verifique os parâmetros e tente novamente.';
+                    $('#error-msg').text(msg).show();
                 });
         }
 

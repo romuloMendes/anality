@@ -44,4 +44,5 @@ Route::prefix('api/reports/attacks')->group(function () {
     Route::get('/weekly', [AttackReportController::class, 'weeklyReport'])->name('report-attacks-weekly');
     Route::get('/daily', [AttackReportController::class, 'dailyReport'])->name('report-attacks-daily');
     Route::get('/export/weekly', [AttackReportController::class, 'exportWeekly'])->name('export-report-attacks-weekly');
+    Route::get('/period-news', [AttackReportController::class, 'periodNews'])->name('report-attacks-period-news');
 });

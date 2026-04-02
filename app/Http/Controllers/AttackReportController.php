@@ -61,6 +61,7 @@ final class AttackReportController extends Controller
 
     /**
      * /api/reports/attacks/weekly — JSON estruturado para o gráfico.
+     * Usa generateSummary() (2 queries GROUP BY) — sem carregar registros em memória.
      */
     public function weeklyReport(Request $request): JsonResponse
     {
@@ -72,28 +73,47 @@ final class AttackReportController extends Controller
             ? Carbon::parse($request->to)->endOfDay()
             : Carbon::now()->endOfDay();
 
-        $rows = $this->reportService->generate($from, $to);
+        $rows = $this->reportService->generateSummary($from, $to);
 
         return response()->json([
             'from'  => $from->toDateString(),
             'to'    => $to->toDateString(),
             'total' => $rows->sum('attack_count'),
             'rows'  => $rows->map(fn($r) => [
-                'period'       => $r['name'],
-                'start_date'   => $r['start_date']->toDateString(),
-                'end_date'     => $r['end_date']->toDateString(),
-                'attack_count' => $r['attack_count'],
-                'news_minus7'  => $r['news_minus7']->map(fn($n) => [
-                    'title'          => $n->title,
-                    'published_date' => $n->published_date->format('d/m/Y'),
-                    'source_name'    => $n->source_name,
-                ])->values(),
-                'news_plus7'   => $r['news_plus7']->map(fn($n) => [
-                    'title'          => $n->title,
-                    'published_date' => $n->published_date->format('d/m/Y'),
-                    'source_name'    => $n->source_name,
-                ])->values(),
+                'period'            => $r['name'],
+                'start_date'        => $r['start_date']->toDateString(),
+                'end_date'          => $r['end_date']->toDateString(),
+                'attack_count'      => $r['attack_count'],
+                'news_minus7_count' => $r['news_minus7_count'],
+                'news_plus7_count'  => $r['news_plus7_count'],
             ]),
+        ]);
+    }
+
+    /**
+     * /api/reports/attacks/period-news — notícias de um período específico (para o painel de clique).
+     */
+    public function periodNews(Request $request): JsonResponse
+    {
+        $request->validate([
+            'start' => ['required', 'date'],
+            'end'   => ['required', 'date', 'after_or_equal:start'],
+        ]);
+
+        $start = Carbon::parse($request->start)->startOfDay();
+        $end   = Carbon::parse($request->end)->endOfDay();
+
+        $data = $this->reportService->getPeriodNews($start, $end);
+
+        $format = fn($n) => [
+            'title'          => $n->title,
+            'published_date' => $n->published_date->format('d/m/Y'),
+            'source_name'    => $n->source_name,
+        ];
+
+        return response()->json([
+            'news_minus7' => $data['news_minus7']->map($format)->values(),
+            'news_plus7'  => $data['news_plus7']->map($format)->values(),
         ]);
     }
 
