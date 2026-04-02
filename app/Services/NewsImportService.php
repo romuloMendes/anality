@@ -472,7 +472,6 @@ class NewsImportService
                     $this->processAttackData($item, basename($filePath));
                     $this->imported++;
                 } catch (\Exception $e) {
-                    dd($e);
                     $this->failed++;
                     $this->errors[] = "Linha {$rowNumber}: " . $e->getMessage();
                     Log::error("Erro na importação de ataque JSON (linha {$rowNumber})", [
