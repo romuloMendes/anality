@@ -101,7 +101,7 @@
                                     <i class="bi bi-cloud-upload fs-1 text-primary mb-2 d-block"></i>
                                     <p class="mb-1 fw-semibold">Arraste e solte o arquivo aqui</p>
                                     <p class="text-muted small mb-0">ou clique para selecionar</p>
-                                    <small class="text-muted">Formatos: JSON, TXT &nbsp;|&nbsp; Máximo: 50MB</small>
+                                    <small class="text-muted">Formatos: JSON, TXT &nbsp;|&nbsp; Máximo: 100MB</small>
                                 </div>
                                 <div id="fileInfo" class="mt-3 p-3 bg-light rounded d-none">
                                     <small>
@@ -185,7 +185,7 @@
                             <li>Use ponto e vírgula (;) como separador de colunas</li>
                             <li>Certifique-se de que as datas seguem o formato: <code>DD.mês.YYYY às HHhMM</code></li>
                             <li>Notícias duplicadas serão ignoradas automaticamente</li>
-                            <li>Máximo de 50MB por arquivo</li>
+                            <li>Máximo de 100MB por arquivo</li>
                         </ul>
                     </div>
                 </div>
@@ -230,8 +230,8 @@
         });
 
         function setFile(file) {
-            if (file.size > 52428800) {
-                showResult('error', 'Arquivo muito grande. O limite é 50MB.');
+            if (file.size > 104857600) {
+                showResult('error', 'Arquivo muito grande. O limite é 100MB.');
                 return;
             }
             selectedFile = file;

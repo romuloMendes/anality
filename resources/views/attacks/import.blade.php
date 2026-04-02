@@ -181,8 +181,8 @@
         });
 
         function setFile(file) {
-            if (file.size > 52428800) {
-                showResult('error', 'Arquivo muito grande. O limite é 50MB.');
+            if (file.size > 104857600) {
+                showResult('error', 'Arquivo muito grande. O limite é 100MB.');
                 return;
             }
             selectedFile = file;
