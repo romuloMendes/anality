@@ -24,6 +24,9 @@ class AttackImportController extends Controller
 
     public function import(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', '300');
+
         if ($this->isPostTooLarge($request)) {
             return redirect()->route('attacks-import.form')
                 ->with('error', 'Arquivo muito grande para envio. Limite atual: ' . $this->getReadablePostMaxSize() . '.')
@@ -55,7 +58,6 @@ class AttackImportController extends Controller
 
         try {
             $file = $request->file('json_file');
-            // dd('importAttacksFromJsonString');
             $jsonContent = File::get($file->getPathname());
             $result      = $this->importService->importAttacksFromJsonString($jsonContent);
 
@@ -76,6 +78,9 @@ class AttackImportController extends Controller
 
     public function importApi(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', '300');
+
         if ($this->isPostTooLarge($request)) {
             return response()->json([
                 'success' => false,
