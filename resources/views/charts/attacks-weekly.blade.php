@@ -61,6 +61,21 @@
             </div>
         </div>
 
+        {{-- Gráfico de Linha --}}
+        @if (count($chartData) > 0)
+            <div class="card mt-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i>
+                        Tendência semanal — {{ $dateFrom->format('d/m/Y') }} a {{ $dateTo->format('d/m/Y') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyAttacksLineChart" style="max-height: 320px;"></canvas>
+                </div>
+            </div>
+        @endif
+
         {{-- Tabela de dados --}}
         @if (count($chartData) > 0)
             <div class="card mt-4">
@@ -128,6 +143,78 @@
             });
 
             const ctx = document.getElementById('weeklyAttacksChart').getContext('2d');
+            const ctxLine = document.getElementById('weeklyAttacksLineChart').getContext('2d');
+
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total de Ataques',
+                        data: totals,
+                        fill: true,
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderColor: 'rgba(13, 110, 253, 0.9)',
+                        pointBackgroundColor: totals.map(v => {
+                            if (maxVal === 0) return 'rgba(13, 110, 253, 0.9)';
+                            const ratio = v / maxVal;
+                            if (ratio >= 0.8) return 'rgba(220, 53, 69, 1)';
+                            if (ratio >= 0.5) return 'rgba(255, 193, 7, 1)';
+                            return 'rgba(13, 110, 253, 0.9)';
+                        }),
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        tension: 0.35,
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => 'Semana: ' + items[0].label,
+                                label: (item) => ' ' + item.raw + ' ataque(s)',
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Intervalo Semanal',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 30,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Ataques',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
 
             new Chart(ctx, {
                 type: 'bar',
@@ -208,6 +295,7 @@
                         }
 
                         const chart = Chart.getChart('weeklyAttacksChart');
+                        const lineChart = Chart.getChart('weeklyAttacksLineChart');
                         const newLabels = data.map(b => b.label);
                         const newTotals = data.map(b => b.total);
                         const newMax = Math.max(...newTotals);
@@ -220,12 +308,25 @@
                             return 'rgba(54, 162, 235, 0.7)';
                         });
 
+                        const newPointColors = newTotals.map(v => {
+                            if (newMax === 0) return 'rgba(13, 110, 253, 0.9)';
+                            const ratio = v / newMax;
+                            if (ratio >= 0.8) return 'rgba(220, 53, 69, 1)';
+                            if (ratio >= 0.5) return 'rgba(255, 193, 7, 1)';
+                            return 'rgba(13, 110, 253, 0.9)';
+                        });
+
                         chart.data.labels = newLabels;
                         chart.data.datasets[0].data = newTotals;
                         chart.data.datasets[0].backgroundColor = newColors;
                         chart.data.datasets[0].borderColor = newColors.map(c => c.replace('0.7', '1').replace('0.8',
                             '1'));
                         chart.update();
+
+                        lineChart.data.labels = newLabels;
+                        lineChart.data.datasets[0].data = newTotals;
+                        lineChart.data.datasets[0].pointBackgroundColor = newPointColors;
+                        lineChart.update();
 
                         // Atualiza a URL sem recarregar
                         const url = new URL(window.location);

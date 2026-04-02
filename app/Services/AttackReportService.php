@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\HackerAttack;
@@ -18,7 +19,7 @@ class AttackReportService
         $allAttacks = HackerAttack::whereBetween('attack_date', [
             $from->toDateString(),
             $to->toDateString(),
-        ])->limit(200)->get();
+        ])->get();
 
         $allNews = News::whereBetween('published_date', [
             $from->copy()->subDays(7)->toDateString(),
@@ -52,11 +53,13 @@ class AttackReportService
                     ])
                     ->count(),
 
-                'news_minus7'  => $allNews->filter(fn($n) =>
+                'news_minus7'  => $allNews->filter(
+                    fn($n) =>
                     $n->published_date->between($minus7Start, $minus7End)
                 )->values(),
 
-                'news_plus7'   => $allNews->filter(fn($n) =>
+                'news_plus7'   => $allNews->filter(
+                    fn($n) =>
                     $n->published_date->between($plus7Start, $plus7End)
                 )->values(),
             ]);

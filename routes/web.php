@@ -16,6 +16,7 @@ Route::get('/timeline', [DashboardController::class, 'timeline'])->name('timelin
 Route::get('/charts/attacks/weekly', [DashboardController::class, 'weeklyAttacksChart'])->name('charts.attacks-weekly');
 Route::get('/api/charts/attacks/weekly', [DashboardController::class, 'weeklyAttacksChartData'])->name('api.charts.attacks-weekly');
 Route::get('/report/attacks', [AttackReportController::class, 'view'])->name('report-attacks-view');
+Route::get('/report/attacks/chart', [AttackReportController::class, 'chart'])->name('report-attacks-chart');
 
 // APIs para análise e scraping
 Route::post('/api/scrape/attacks', [AnalysisController::class, 'scrapeAttacks'])->name('scrape-attacks');

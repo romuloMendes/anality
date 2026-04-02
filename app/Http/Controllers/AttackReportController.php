@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
@@ -8,6 +8,7 @@ use App\Services\AttackReportService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 final class AttackReportController extends Controller
 {
@@ -16,88 +17,67 @@ final class AttackReportController extends Controller
     ) {}
 
     /**
-     * Retorna a view do relatório
-     *
-     * @return \Illuminate\View\View
+     * Retorna a view de tabela do relatório.
+     * Aceita query params ?from=dd/mm/YYYY&to=dd/mm/YYYY
      */
     public function view(Request $request)
     {
         $from = $request->filled('from')
-            ? Carbon::createFromFormat('d/m/Y', $request->from)
-            : Carbon::create(2022, 1, 1);
+            ? Carbon::createFromFormat('d/m/Y', $request->from)->startOfDay()
+            : Carbon::create(2022, 1, 1)->startOfDay();
 
         $to = $request->filled('to')
-            ? Carbon::createFromFormat('d/m/Y', $request->to)
-            : Carbon::now();
-        // dd("xx");
+            ? Carbon::createFromFormat('d/m/Y', $request->to)->endOfDay()
+            : Carbon::now()->endOfDay();
+
         $rows = $this->reportService->generate($from, $to);
 
         return view('reports.attacks', compact('rows', 'from', 'to'));
     }
 
     /**
-     * Gera e retorna relatório diário de ataques
-     *
-     * @return JsonResponse
+     * Retorna a view do dashboard gráfico.
      */
+    public function chart(Request $request)
+    {
+        $from = $request->filled('from')
+            ? Carbon::parse($request->from)->startOfDay()
+            : Carbon::create(2022, 1, 1)->startOfDay();
+
+        $to = $request->filled('to')
+            ? Carbon::parse($request->to)->endOfDay()
+            : Carbon::create(2022, 12, 31)->endOfDay();
+
+        return view('reports.attacks_chart', compact('from', 'to'));
+    }
 
     /**
-     * /api/reports/attacks/daily
+     * /api/reports/attacks/daily — delega ao semanal.
      */
-    public function dailyReport(Request $request)
+    public function dailyReport(Request $request): JsonResponse
     {
-        // mesma lógica mas com addDays(1) no service — ou pode reusar generate()
         return $this->weeklyReport($request);
     }
 
     /**
-     * /export/report/attacks/weekly — exporta CSV
+     * /api/reports/attacks/weekly — JSON estruturado para o gráfico.
      */
-    public function exportWeekly(Request $request)
-    {
-        dd("xxx");
-        $from = Carbon::parse($request->from ?? '2022-01-01');
-        $to   = Carbon::parse($request->to ?? now());
-        $rows = $this->service->generate($from, $to);
-
-        $csv = "Período;Qtd Ataques;Notícias -7 dias;Notícias +7 dias\n";
-
-        foreach ($rows as $row) {
-            $minus7 = $row['news_minus7']->map(fn($n) =>
-                $n->title . ' (' . $n->published_date->format('d/m/Y') . ')'
-            )->implode(' | ');
-
-            $plus7 = $row['news_plus7']->map(fn($n) =>
-                $n->title . ' (' . $n->published_date->format('d/m/Y') . ')'
-            )->implode(' | ');
-
-            $csv .= "\"{$row['name']}\";{$row['attack_count']};\"$minus7\";\"$plus7\"\n";
-        }
-
-        return response($csv)
-            ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="report-attacks.csv"');
-    }
-
-    /**
-     * /api/reports/attacks/weekly  — JSON para APIs ou exportação
-     */
-    public function weeklyReport(Request $request)
+    public function weeklyReport(Request $request): JsonResponse
     {
         $from = $request->filled('from')
-            ? Carbon::parse($request->from)
-            : Carbon::create(2022, 1, 1);
+            ? Carbon::parse($request->from)->startOfDay()
+            : Carbon::create(2022, 1, 1)->startOfDay();
 
         $to = $request->filled('to')
-            ? Carbon::parse($request->to)
-            : Carbon::now();
+            ? Carbon::parse($request->to)->endOfDay()
+            : Carbon::now()->endOfDay();
 
-        $rows = $this->service->generate($from, $to);
+        $rows = $this->reportService->generate($from, $to);
 
         return response()->json([
             'from'  => $from->toDateString(),
             'to'    => $to->toDateString(),
-            'total' => $rows->count(),
+            'total' => $rows->sum('attack_count'),
             'rows'  => $rows->map(fn($r) => [
                 'period'       => $r['name'],
                 'start_date'   => $r['start_date']->toDateString(),
@@ -107,13 +87,47 @@ final class AttackReportController extends Controller
                     'title'          => $n->title,
                     'published_date' => $n->published_date->format('d/m/Y'),
                     'source_name'    => $n->source_name,
-                ]),
+                ])->values(),
                 'news_plus7'   => $r['news_plus7']->map(fn($n) => [
                     'title'          => $n->title,
                     'published_date' => $n->published_date->format('d/m/Y'),
                     'source_name'    => $n->source_name,
-                ]),
+                ])->values(),
             ]),
         ]);
+    }
+
+    /**
+     * /api/reports/attacks/export/weekly — download CSV.
+     */
+    public function exportWeekly(Request $request): Response
+    {
+        $from = $request->filled('from')
+            ? Carbon::parse($request->from)->startOfDay()
+            : Carbon::create(2022, 1, 1)->startOfDay();
+
+        $to = $request->filled('to')
+            ? Carbon::parse($request->to)->endOfDay()
+            : Carbon::now()->endOfDay();
+
+        $rows = $this->reportService->generate($from, $to);
+
+        $lines = ["Período;Qtd Ataques;Notícias -7 dias;Notícias +7 dias"];
+
+        foreach ($rows as $row) {
+            $minus7 = $row['news_minus7']->map(
+                fn($n) => $n->title . ' (' . $n->published_date->format('d/m/Y') . ' · ' . $n->source_name . ')'
+            )->implode(' | ');
+
+            $plus7 = $row['news_plus7']->map(
+                fn($n) => $n->title . ' (' . $n->published_date->format('d/m/Y') . ' · ' . $n->source_name . ')'
+            )->implode(' | ');
+
+            $lines[] = "\"{$row['name']}\";{$row['attack_count']};\"$minus7\";\"$plus7\"";
+        }
+
+        return response(implode("\n", $lines))
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="report-attacks-weekly.csv"');
     }
 }
