@@ -13,6 +13,8 @@ Route::get('/correlations', [DashboardController::class, 'correlations'])->name(
 Route::get('/attacks', [DashboardController::class, 'attacks'])->name('attacks');
 Route::get('/attacks/{id}', [DashboardController::class, 'attackDetail'])->name('attack-detail');
 Route::get('/timeline', [DashboardController::class, 'timeline'])->name('timeline');
+Route::get('/charts/attacks/weekly', [DashboardController::class, 'weeklyAttacksChart'])->name('charts.attacks-weekly');
+Route::get('/api/charts/attacks/weekly', [DashboardController::class, 'weeklyAttacksChartData'])->name('api.charts.attacks-weekly');
 Route::get('/report/attacks', [AttackReportController::class, 'view'])->name('report-attacks-view');
 
 // APIs para análise e scraping

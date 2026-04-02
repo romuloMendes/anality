@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\HackerAttack;
 use App\Models\News;
 use App\Models\CorrelationAnalysis;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SampleDataSeeder extends Seeder
