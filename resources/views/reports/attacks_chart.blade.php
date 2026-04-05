@@ -1,833 +1,576 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Ataques – Anality</title>
+@section('title', 'Dashboard de Ataques – Anality')
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"
-        referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" crossorigin="anonymous"
-        referrerpolicy="no-referrer"></script>
+@push('styles')
+<style>
+    .filter-bar {
+        display: flex;
+        align-items: flex-end;
+        gap: .75rem;
+        flex-wrap: wrap;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: .9rem 1.1rem;
+        margin-bottom: 1.25rem;
+    }
 
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    .filter-bar label {
+        display: block;
+        font-size: .7rem;
+        color: var(--muted);
+        margin-bottom: .25rem;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
 
-        :root {
-            --bg: #080c10;
-            --surface: #0d1117;
-            --surface2: #161b22;
-            --border: #21262d;
-            --text: #c9d1d9;
-            --muted: #6e7681;
-            --red: rgba(255, 59, 92, 1);
-            --red-soft: rgba(255, 59, 92, 0.45);
-            --yellow: rgba(255, 184, 0, 1);
-            --blue: rgba(56, 139, 253, 1);
-            --blue-dim: rgba(56, 139, 253, 0.15);
-            --mono: 'Courier New', Courier, monospace;
-        }
+    .filter-bar input[type="date"] {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-family: "Share Tech Mono", monospace;
+        font-size: .85rem;
+        padding: .4rem .6rem;
+        border-radius: 4px;
+        outline: none;
+    }
 
-        html,
-        body {
-            height: 100%;
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--mono);
-        }
+    .filter-bar input[type="date"]:focus {
+        border-color: var(--accent);
+    }
 
-        a {
-            color: var(--blue);
-            text-decoration: none;
-        }
+    .btn-export {
+        background: transparent;
+        color: var(--ok);
+        border: 1px solid var(--ok);
+        font-family: "Share Tech Mono", monospace;
+        font-size: .82rem;
+        padding: .42rem .9rem;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+        transition: opacity .15s;
+    }
 
-        a:hover {
-            text-decoration: underline;
-        }
+    .btn-export:hover { opacity: .8; color: var(--ok); }
 
-        /* ── Header ───────────────────────────────────────── */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 1.5rem;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-        }
+    .btn-table {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        font-family: "Share Tech Mono", monospace;
+        font-size: .82rem;
+        padding: .42rem .9rem;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+        transition: opacity .15s;
+    }
 
-        .header-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: .05em;
-            color: #fff;
-        }
+    .btn-table:hover { color: var(--text); border-color: var(--text); }
 
-        .header-title span {
-            color: var(--red);
-        }
+    .kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: .75rem;
+        margin-bottom: 1.25rem;
+    }
 
-        .header-nav a {
-            color: var(--muted);
-            font-size: .8rem;
-            margin-left: 1rem;
-        }
+    @media (max-width: 768px) {
+        .kpis { grid-template-columns: repeat(2, 1fr); }
+    }
 
-        .header-nav a:hover {
-            color: var(--text);
-            text-decoration: none;
-        }
+    .kpi {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: .9rem 1rem;
+    }
 
-        /* ── Main layout ──────────────────────────────────── */
-        .main {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
+    .kpi .kpi-label {
+        font-size: .68rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--muted);
+        margin-bottom: .3rem;
+    }
 
-        /* ── Filter bar ───────────────────────────────────── */
-        .filter-bar {
-            display: flex;
-            align-items: flex-end;
-            gap: .75rem;
-            flex-wrap: wrap;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: .9rem 1.1rem;
-            margin-bottom: 1.25rem;
-        }
+    .kpi .kpi-value {
+        font-size: 1.9rem;
+        font-weight: 700;
+        line-height: 1;
+    }
 
-        .filter-bar label {
-            display: block;
-            font-size: .7rem;
-            color: var(--muted);
-            margin-bottom: .25rem;
-            letter-spacing: .06em;
-            text-transform: uppercase;
-        }
+    .kpi .kpi-value.red    { color: var(--danger); }
+    .kpi .kpi-value.blue   { color: var(--accent); }
+    .kpi .kpi-value.yellow { color: var(--warn); }
+    .kpi .kpi-value.white  { color: var(--text); }
 
-        .filter-bar input[type="date"] {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: .85rem;
-            padding: .4rem .6rem;
-            border-radius: 4px;
-            outline: none;
-        }
+    .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem 1.25rem 1.25rem;
+        margin-bottom: 1.25rem;
+    }
 
-        .filter-bar input[type="date"]:focus {
-            border-color: var(--blue);
-        }
+    .chart-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
 
-        .btn {
-            cursor: pointer;
-            font-family: var(--mono);
-            font-size: .82rem;
-            padding: .42rem .9rem;
-            border-radius: 4px;
-            border: 1px solid transparent;
-            transition: opacity .15s;
-        }
+    .chart-card-title {
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--muted);
+    }
 
-        .btn:hover {
-            opacity: .85;
-        }
+    .chart-legend { display: flex; gap: 1.25rem; }
 
-        .btn-primary {
-            background: #1f6feb;
-            color: #fff;
-            border-color: #1f6feb;
-        }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .72rem;
+        color: var(--muted);
+    }
 
-        .btn-outline {
-            background: transparent;
-            color: var(--muted);
-            border-color: var(--border);
-        }
+    .legend-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-line  { width: 20px; height: 2px; flex-shrink: 0; }
+    .legend-dashed { width: 20px; height: 0; border-top: 2px dashed; flex-shrink: 0; }
 
-        .btn-outline:hover {
-            color: var(--text);
-            border-color: var(--text);
-            opacity: 1;
-        }
+    #chart-wrapper { position: relative; height: 340px; }
 
-        .btn-export {
-            background: transparent;
-            color: #3fb950;
-            border-color: #3fb950;
-        }
+    #chart-loader {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface);
+        z-index: 10;
+    }
 
-        .btn-table {
-            background: transparent;
-            color: var(--muted);
-            border-color: var(--border);
-        }
+    .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+    }
 
-        /* ── KPI cards ────────────────────────────────────── */
-        .kpis {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: .75rem;
-            margin-bottom: 1.25rem;
-        }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 768px) {
-            .kpis {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+    #news-panel {
+        display: none;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem 1.25rem;
+    }
 
-        .kpi {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: .9rem 1rem;
-        }
+    #news-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: .9rem;
+    }
 
-        .kpi-label {
-            font-size: .68rem;
-            text-transform: uppercase;
-            letter-spacing: .07em;
-            color: var(--muted);
-            margin-bottom: .3rem;
-        }
+    #news-panel-title {
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--muted);
+    }
 
-        .kpi-value {
-            font-size: 1.9rem;
-            font-weight: 700;
-            line-height: 1;
-        }
+    #news-panel-close {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: .75rem;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: .15rem .5rem;
+        background: transparent;
+        font-family: "Share Tech Mono", monospace;
+    }
 
-        .kpi-value.red {
-            color: var(--red);
-        }
+    #news-panel-close:hover { color: var(--text); border-color: var(--text); }
 
-        .kpi-value.blue {
-            color: var(--blue);
-        }
+    .news-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
 
-        .kpi-value.yellow {
-            color: var(--yellow);
-        }
+    @media (max-width: 640px) { .news-columns { grid-template-columns: 1fr; } }
 
-        .kpi-value.white {
-            color: #e6edf3;
-        }
+    .news-col-title {
+        font-size: .7rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: .6rem;
+        padding-bottom: .4rem;
+        border-bottom: 1px solid var(--border);
+    }
 
-        /* ── Chart card ───────────────────────────────────── */
-        .chart-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 1rem 1.25rem 1.25rem;
-            margin-bottom: 1.25rem;
-        }
+    .news-col-title.minus { color: var(--accent); }
+    .news-col-title.plus  { color: var(--warn); }
 
-        .chart-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-        }
+    .news-item { padding: .5rem 0; border-bottom: 1px solid var(--border); }
+    .news-item:last-child { border-bottom: none; }
+    .news-item-title { font-size: .8rem; color: var(--text); line-height: 1.35; margin-bottom: .2rem; }
+    .news-item-meta  { font-size: .7rem; color: var(--muted); }
+    .news-empty      { font-size: .78rem; color: var(--muted); font-style: italic; }
 
-        .chart-card-title {
-            font-size: .8rem;
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            color: var(--muted);
-        }
+    #error-msg {
+        display: none;
+        background: rgba(255, 59, 92, .1);
+        border: 1px solid rgba(255, 59, 92, .4);
+        border-radius: 6px;
+        padding: .75rem 1rem;
+        font-size: .82rem;
+        color: var(--danger);
+        margin-bottom: 1rem;
+    }
+</style>
+@endpush
 
-        .chart-legend {
-            display: flex;
-            gap: 1.25rem;
-        }
+@section('content')
+<div class="container-fluid py-4">
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: .4rem;
-            font-size: .72rem;
-            color: var(--muted);
-        }
-
-        .legend-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .legend-line {
-            width: 20px;
-            height: 2px;
-            flex-shrink: 0;
-        }
-
-        .legend-dashed {
-            width: 20px;
-            height: 0;
-            border-top: 2px dashed;
-            flex-shrink: 0;
-        }
-
-        #chart-wrapper {
-            position: relative;
-            height: 340px;
-        }
-
-        /* spinner */
-        #chart-loader {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface);
-            z-index: 10;
-        }
-
-        .spinner {
-            width: 36px;
-            height: 36px;
-            border: 3px solid var(--border);
-            border-top-color: var(--blue);
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* ── News panel ───────────────────────────────────── */
-        #news-panel {
-            display: none;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 1rem 1.25rem;
-        }
-
-        #news-panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: .9rem;
-        }
-
-        #news-panel-title {
-            font-size: .8rem;
-            text-transform: uppercase;
-            letter-spacing: .07em;
-            color: var(--muted);
-        }
-
-        #news-panel-close {
-            cursor: pointer;
-            color: var(--muted);
-            font-size: .75rem;
-            border: 1px solid var(--border);
-            border-radius: 3px;
-            padding: .15rem .5rem;
-            background: transparent;
-            font-family: var(--mono);
-        }
-
-        #news-panel-close:hover {
-            color: var(--text);
-            border-color: var(--text);
-        }
-
-        .news-columns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        @media (max-width: 640px) {
-            .news-columns {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .news-col-title {
-            font-size: .7rem;
-            text-transform: uppercase;
-            letter-spacing: .07em;
-            margin-bottom: .6rem;
-            padding-bottom: .4rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .news-col-title.minus {
-            color: var(--blue);
-        }
-
-        .news-col-title.plus {
-            color: var(--yellow);
-        }
-
-        .news-item {
-            padding: .5rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .news-item:last-child {
-            border-bottom: none;
-        }
-
-        .news-item-title {
-            font-size: .8rem;
-            color: var(--text);
-            line-height: 1.35;
-            margin-bottom: .2rem;
-        }
-
-        .news-item-meta {
-            font-size: .7rem;
-            color: var(--muted);
-        }
-
-        .news-empty {
-            font-size: .78rem;
-            color: var(--muted);
-            font-style: italic;
-        }
-
-        /* ── Error ────────────────────────────────────────── */
-        #error-msg {
-            display: none;
-            background: rgba(255, 59, 92, .1);
-            border: 1px solid rgba(255, 59, 92, .4);
-            border-radius: 6px;
-            padding: .75rem 1rem;
-            font-size: .82rem;
-            color: var(--red);
-            margin-bottom: 1rem;
-        }
-    </style>
-</head>
-
-<body>
-
-    <!-- Header -->
-    <div class="header">
-        <div class="header-title">
-            <span>⬡</span> Anality — <span>Dashboard de Ataques</span>
+    <div class="filter-bar">
+        <div>
+            <label for="date-from">Data Inicial</label>
+            <input type="date" id="date-from" value="{{ $from->toDateString() }}">
         </div>
-        <nav class="header-nav">
-            <a href="{{ route('dashboard') }}">Dashboard</a>
-            <a href="{{ route('report-attacks-view') }}">Tabela</a>
-            <a href="{{ route('attacks') }}">Ataques</a>
-        </nav>
+        <div>
+            <label for="date-to">Data Final</label>
+            <input type="date" id="date-to" value="{{ $to->toDateString() }}">
+        </div>
+        <button id="btn-filter" class="btn btn-primary">Filtrar</button>
+        <button id="btn-reset" class="btn btn-secondary">Limpar</button>
+        <a id="btn-export" class="btn-export" href="#">⬇ Exportar CSV</a>
+        <a href="{{ route('report-attacks-view') }}" class="btn-table">☰ Ver Tabela</a>
     </div>
 
-    <div class="main">
+    <div id="error-msg"></div>
 
-        <!-- Filter bar -->
-        <div class="filter-bar">
+    <div class="kpis">
+        <div class="kpi">
+            <div class="kpi-label">Total de Ataques</div>
+            <div class="kpi-value red" id="kpi-attacks">—</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Períodos</div>
+            <div class="kpi-value white" id="kpi-periods">—</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Total de Notícias</div>
+            <div class="kpi-value blue" id="kpi-news">—</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Pico Semanal</div>
+            <div class="kpi-value yellow" id="kpi-peak">—</div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <span class="chart-card-title">Ataques &amp; Notícias · Intervalos de 7 dias</span>
+            <div class="chart-legend">
+                <span class="legend-item">
+                    <span class="legend-dot" style="background:rgba(255,59,92,0.85)"></span> Ataques
+                </span>
+                <span class="legend-item">
+                    <span class="legend-line" style="background:rgba(56,139,253,1)"></span> Notícias –7d
+                </span>
+                <span class="legend-item">
+                    <span class="legend-dashed" style="border-color:rgba(255,184,0,1)"></span> Notícias +7d
+                </span>
+            </div>
+        </div>
+        <div id="chart-wrapper">
+            <div id="chart-loader">
+                <div class="spinner"></div>
+            </div>
+            <canvas id="attacksChart"></canvas>
+        </div>
+    </div>
+
+    <div id="news-panel">
+        <div id="news-panel-header">
+            <span id="news-panel-title">Notícias do período —</span>
+            <button id="news-panel-close">✕ Fechar</button>
+        </div>
+        <div class="news-columns">
             <div>
-                <label for="date-from">Data Inicial</label>
-                <input type="date" id="date-from" value="{{ $from->toDateString() }}">
+                <div class="news-col-title minus">◈ Notícias –7 dias (antes do período)</div>
+                <div id="news-minus7-list"></div>
             </div>
             <div>
-                <label for="date-to">Data Final</label>
-                <input type="date" id="date-to" value="{{ $to->toDateString() }}">
-            </div>
-            <button id="btn-filter" class="btn btn-primary">Filtrar</button>
-            <button id="btn-reset" class="btn btn-outline">Limpar</button>
-            <a id="btn-export" class="btn btn-export" href="#">⬇ Exportar CSV</a>
-            <a href="{{ route('report-attacks-view') }}" class="btn btn-table">☰ Ver Tabela</a>
-        </div>
-
-        <!-- Error -->
-        <div id="error-msg"></div>
-
-        <!-- KPIs -->
-        <div class="kpis">
-            <div class="kpi">
-                <div class="kpi-label">Total de Ataques</div>
-                <div class="kpi-value red" id="kpi-attacks">—</div>
-            </div>
-            <div class="kpi">
-                <div class="kpi-label">Períodos</div>
-                <div class="kpi-value white" id="kpi-periods">—</div>
-            </div>
-            <div class="kpi">
-                <div class="kpi-label">Total de Notícias</div>
-                <div class="kpi-value blue" id="kpi-news">—</div>
-            </div>
-            <div class="kpi">
-                <div class="kpi-label">Pico Semanal</div>
-                <div class="kpi-value yellow" id="kpi-peak">—</div>
+                <div class="news-col-title plus">◈ Notícias +7 dias (a partir do período)</div>
+                <div id="news-plus7-list"></div>
             </div>
         </div>
+    </div>
 
-        <!-- Chart -->
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <span class="chart-card-title">Ataques &amp; Notícias · Intervalos de 7 dias</span>
-                <div class="chart-legend">
-                    <span class="legend-item">
-                        <span class="legend-dot" style="background:rgba(255,59,92,0.85)"></span> Ataques
-                    </span>
-                    <span class="legend-item">
-                        <span class="legend-line" style="background:rgba(56,139,253,1)"></span> Notícias –7d
-                    </span>
-                    <span class="legend-item">
-                        <span class="legend-dashed" style="border-color:rgba(255,184,0,1)"></span> Notícias +7d
-                    </span>
-                </div>
-            </div>
-            <div id="chart-wrapper">
-                <div id="chart-loader">
-                    <div class="spinner"></div>
-                </div>
-                <canvas id="attacksChart"></canvas>
-            </div>
-        </div>
+</div>
+@endsection
 
-        <!-- News panel -->
-        <div id="news-panel">
-            <div id="news-panel-header">
-                <span id="news-panel-title">Notícias do período —</span>
-                <button id="news-panel-close">✕ Fechar</button>
-            </div>
-            <div class="news-columns">
-                <div>
-                    <div class="news-col-title minus">◈ Notícias –7 dias (antes do período)</div>
-                    <div id="news-minus7-list"></div>
-                </div>
-                <div>
-                    <div class="news-col-title plus">◈ Notícias +7 dias (a partir do período)</div>
-                    <div id="news-plus7-list"></div>
-                </div>
-            </div>
-        </div>
+@push('scripts')
+<script>
+    const API_URL         = '{{ route("report-attacks-weekly") }}';
+    const PERIOD_NEWS_URL = '{{ route("report-attacks-period-news") }}';
+    const EXPORT_URL      = '{{ route("export-report-attacks-weekly") }}';
+    const DEFAULT_FROM    = '{{ $from->toDateString() }}';
+    const DEFAULT_TO      = '{{ $to->toDateString() }}';
 
-    </div><!-- .main -->
+    let reportData = null;
+    let chart      = null;
 
-    <script>
-        const API_URL = '{{ route('report-attacks-weekly') }}';
-        const PERIOD_NEWS_URL = '{{ route('report-attacks-period-news') }}';
-        const EXPORT_URL = '{{ route('export-report-attacks-weekly') }}';
-        const DEFAULT_FROM = '{{ $from->toDateString() }}';
-        const DEFAULT_TO = '{{ $to->toDateString() }}';
+    function getBarColor(count) {
+        if (count >= 70) return 'rgba(255,59,92,0.85)';
+        if (count >= 40) return 'rgba(255,184,0,0.75)';
+        return 'rgba(255,59,92,0.45)';
+    }
 
-        let reportData = null;
-        let chart = null;
+    function renderNewsList(containerId, items) {
+        const $el = $('#' + containerId);
+        $el.empty();
+        if (!items || items.length === 0) {
+            $el.append('<div class="news-empty">Nenhuma notícia neste intervalo.</div>');
+            return;
+        }
+        items.forEach(function (n) {
+            $el.append(
+                '<div class="news-item">' +
+                '<div class="news-item-title">' + $('<span>').text(n.title).html() + '</div>' +
+                '<div class="news-item-meta">' + n.published_date + ' &middot; ' + $('<span>').text(n.source_name).html() + '</div>' +
+                '</div>'
+            );
+        });
+    }
 
-        /* ── Helpers ──────────────────────────────────────────── */
-        function getBarColor(count) {
-            if (count >= 70) return 'rgba(255,59,92,0.85)';
-            if (count >= 40) return 'rgba(255,184,0,0.75)';
-            return 'rgba(255,59,92,0.45)';
+    function showNewsPanel(row) {
+        const label = 'Notícias do período — ' + row.period + ' a ' + row.end_date.split('-').reverse().join('/');
+        $('#news-panel-title').text(label);
+        $('#news-minus7-list').html('<div class="news-empty">Carregando...</div>');
+        $('#news-plus7-list').html('<div class="news-empty">Carregando...</div>');
+        $('#news-panel').slideDown(200);
+        $('html, body').animate({ scrollTop: $('#news-panel').offset().top - 20 }, 300);
+
+        $.ajax({
+            url: PERIOD_NEWS_URL,
+            data: { start: row.start_date, end: row.end_date },
+            dataType: 'json',
+            timeout: 20000,
+        })
+        .done(function (data) {
+            renderNewsList('news-minus7-list', data.news_minus7);
+            renderNewsList('news-plus7-list', data.news_plus7);
+        })
+        .fail(function () {
+            $('#news-minus7-list').html('<div class="news-empty">Erro ao carregar notícias.</div>');
+            $('#news-plus7-list').html('<div class="news-empty">Erro ao carregar notícias.</div>');
+        });
+    }
+
+    function updateKPIs(data) {
+        const totalAttacks = data.total;
+        const periods      = data.rows.length;
+        const totalNews    = data.rows.reduce(function (acc, r) {
+            return acc + (r.news_minus7_count || 0) + (r.news_plus7_count || 0);
+        }, 0);
+        const peak = data.rows.reduce(function (max, r) {
+            return r.attack_count > max ? r.attack_count : max;
+        }, 0);
+
+        $('#kpi-attacks').text(totalAttacks.toLocaleString('pt-BR'));
+        $('#kpi-periods').text(periods);
+        $('#kpi-news').text(totalNews.toLocaleString('pt-BR'));
+        $('#kpi-peak').text(peak.toLocaleString('pt-BR'));
+    }
+
+    function buildChart(data) {
+        reportData = data;
+        updateKPIs(data);
+
+        const labels   = data.rows.map(function (r) { return r.period; });
+        const counts   = data.rows.map(function (r) { return r.attack_count; });
+        const minus7   = data.rows.map(function (r) { return r.news_minus7_count || 0; });
+        const plus7    = data.rows.map(function (r) { return r.news_plus7_count  || 0; });
+        const bgColors = counts.map(getBarColor);
+
+        if (chart) {
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = counts;
+            chart.data.datasets[0].backgroundColor = bgColors;
+            chart.data.datasets[1].data = minus7;
+            chart.data.datasets[2].data = plus7;
+            chart.update();
+            return;
         }
 
-        function renderNewsList(containerId, items) {
-            const $el = $('#' + containerId);
-            $el.empty();
-            if (!items || items.length === 0) {
-                $el.append('<div class="news-empty">Nenhuma notícia neste intervalo.</div>');
-                return;
-            }
-            items.forEach(function(n) {
-                $el.append(
-                    '<div class="news-item">' +
-                    '<div class="news-item-title">' + $('<span>').text(n.title).html() + '</div>' +
-                    '<div class="news-item-meta">' + n.published_date + ' &middot; ' + $('<span>').text(n
-                        .source_name).html() + '</div>' +
-                    '</div>'
-                );
-            });
-        }
-
-        function showNewsPanel(row) {
-            const label = 'Notícias do período — ' + row.period + ' a ' + row.end_date.split('-').reverse().join('/');
-            $('#news-panel-title').text(label);
-            $('#news-minus7-list').html('<div class="news-empty">Carregando...</div>');
-            $('#news-plus7-list').html('<div class="news-empty">Carregando...</div>');
-            $('#news-panel').slideDown(200);
-            $('html, body').animate({
-                scrollTop: $('#news-panel').offset().top - 20
-            }, 300);
-
-            $.ajax({
-                    url: PERIOD_NEWS_URL,
-                    data: {
-                        start: row.start_date,
-                        end: row.end_date
+        const ctx = document.getElementById('attacksChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Ataques',
+                        data: counts,
+                        backgroundColor: bgColors,
+                        borderRadius: 3,
+                        order: 2,
                     },
-                    dataType: 'json',
-                    timeout: 20000,
-                })
-                .done(function(data) {
-                    renderNewsList('news-minus7-list', data.news_minus7);
-                    renderNewsList('news-plus7-list', data.news_plus7);
-                })
-                .fail(function() {
-                    $('#news-minus7-list').html('<div class="news-empty">Erro ao carregar notícias.</div>');
-                    $('#news-plus7-list').html('<div class="news-empty">Erro ao carregar notícias.</div>');
-                });
-        }
-
-        /* ── KPIs ─────────────────────────────────────────────── */
-        function updateKPIs(data) {
-            const totalAttacks = data.total;
-            const periods = data.rows.length;
-            const totalNews = data.rows.reduce(function(acc, r) {
-                return acc + (r.news_minus7_count || 0) + (r.news_plus7_count || 0);
-            }, 0);
-            const peak = data.rows.reduce(function(max, r) {
-                return r.attack_count > max ? r.attack_count : max;
-            }, 0);
-
-            $('#kpi-attacks').text(totalAttacks.toLocaleString('pt-BR'));
-            $('#kpi-periods').text(periods);
-            $('#kpi-news').text(totalNews.toLocaleString('pt-BR'));
-            $('#kpi-peak').text(peak.toLocaleString('pt-BR'));
-        }
-
-        /* ── Build / refresh chart ────────────────────────────── */
-        function buildChart(data) {
-            reportData = data;
-            updateKPIs(data);
-
-            const labels = data.rows.map(function(r) {
-                return r.period;
-            });
-            const counts = data.rows.map(function(r) {
-                return r.attack_count;
-            });
-            const minus7 = data.rows.map(function(r) {
-                return r.news_minus7_count || 0;
-            });
-            const plus7 = data.rows.map(function(r) {
-                return r.news_plus7_count || 0;
-            });
-            const bgColors = counts.map(getBarColor);
-
-            if (chart) {
-                chart.data.labels = labels;
-                chart.data.datasets[0].data = counts;
-                chart.data.datasets[0].backgroundColor = bgColors;
-                chart.data.datasets[1].data = minus7;
-                chart.data.datasets[2].data = plus7;
-                chart.update();
-                return;
-            }
-
-            const ctx = document.getElementById('attacksChart').getContext('2d');
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                            type: 'bar',
-                            label: 'Ataques',
-                            data: counts,
-                            backgroundColor: bgColors,
-                            borderRadius: 3,
-                            order: 2,
-                        },
-                        {
-                            type: 'line',
-                            label: 'Notícias –7 dias',
-                            data: minus7,
-                            borderColor: 'rgba(56,139,253,1)',
-                            backgroundColor: 'rgba(56,139,253,0.08)',
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            pointBackgroundColor: 'rgba(56,139,253,1)',
-                            tension: 0.3,
-                            fill: false,
-                            order: 1,
-                        },
-                        {
-                            type: 'line',
-                            label: 'Notícias +7 dias',
-                            data: plus7,
-                            borderColor: 'rgba(255,184,0,1)',
-                            backgroundColor: 'rgba(255,184,0,0.06)',
-                            borderWidth: 2,
-                            borderDash: [6, 3],
-                            pointRadius: 3,
-                            pointBackgroundColor: 'rgba(255,184,0,1)',
-                            tension: 0.3,
-                            fill: false,
-                            order: 0,
-                        },
-                    ]
+                    {
+                        type: 'line',
+                        label: 'Notícias –7 dias',
+                        data: minus7,
+                        borderColor: 'rgba(56,139,253,1)',
+                        backgroundColor: 'rgba(56,139,253,0.08)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: 'rgba(56,139,253,1)',
+                        tension: 0.3,
+                        fill: false,
+                        order: 1,
+                    },
+                    {
+                        type: 'line',
+                        label: 'Notícias +7 dias',
+                        data: plus7,
+                        borderColor: 'rgba(255,184,0,1)',
+                        backgroundColor: 'rgba(255,184,0,0.06)',
+                        borderWidth: 2,
+                        borderDash: [6, 3],
+                        pointRadius: 3,
+                        pointBackgroundColor: 'rgba(255,184,0,1)',
+                        tension: 0.3,
+                        fill: false,
+                        order: 0,
+                    },
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#161b22',
+                        borderColor: '#21262d',
+                        borderWidth: 1,
+                        titleColor: '#c9d1d9',
+                        bodyColor: '#8b949e',
+                        titleFont: { family: "'Share Tech Mono', monospace", size: 11 },
+                        bodyFont:  { family: "'Share Tech Mono', monospace", size: 11 },
+                        padding: 10,
+                        callbacks: {
+                            title: function (items) { return '⬡ ' + items[0].label; },
+                            label: function (item) {
+                                const icons = ['⬡ Ataques', '◈ Notícias –7d', '◈ Notícias +7d'];
+                                return '  ' + icons[item.datasetIndex] + ': ' + item.raw;
+                            },
+                        }
+                    },
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#6e7681',
+                            font: { family: "'Share Tech Mono', monospace", size: 10 },
+                            maxRotation: 45,
+                            minRotation: 30,
                         },
-                        tooltip: {
-                            backgroundColor: '#161b22',
-                            borderColor: '#21262d',
-                            borderWidth: 1,
-                            titleColor: '#c9d1d9',
-                            bodyColor: '#8b949e',
-                            titleFont: {
-                                family: "'Courier New', monospace",
-                                size: 11
-                            },
-                            bodyFont: {
-                                family: "'Courier New', monospace",
-                                size: 11
-                            },
-                            padding: 10,
-                            callbacks: {
-                                title: function(items) {
-                                    return '⬡ ' + items[0].label;
-                                },
-                                label: function(item) {
-                                    const icons = ['⬡ Ataques', '◈ Notícias –7d', '◈ Notícias +7d'];
-                                    return '  ' + icons[item.datasetIndex] + ': ' + item.raw;
-                                },
-                            }
+                        grid: { color: '#21262d' },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#6e7681',
+                            font: { family: "'Share Tech Mono', monospace", size: 10 },
+                            precision: 0,
                         },
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                color: '#6e7681',
-                                font: {
-                                    family: "'Courier New', monospace",
-                                    size: 10
-                                },
-                                maxRotation: 45,
-                                minRotation: 30,
-                            },
-                            grid: {
-                                color: '#21262d'
-                            },
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#6e7681',
-                                font: {
-                                    family: "'Courier New', monospace",
-                                    size: 10
-                                },
-                                precision: 0,
-                            },
-                            grid: {
-                                color: '#21262d'
-                            },
-                        }
-                    },
-                    onClick: function(evt) {
-                        const elements = chart.getElementsAtEventForMode(evt, 'nearest', {
-                            intersect: true
-                        }, false);
-                        if (elements.length > 0) {
-                            const idx = elements[0].index;
-                            showNewsPanel(reportData.rows[idx]);
-                        }
-                    },
-                }
-            });
-        }
-
-        /* ── Load data ─────────────────────────────────────────── */
-        function loadData() {
-            const from = $('#date-from').val();
-            const to = $('#date-to').val();
-
-            if (!from || !to) {
-                $('#error-msg').text('Preencha os dois campos de data.').show();
-                return;
-            }
-            if (from > to) {
-                $('#error-msg').text('A data inicial não pode ser posterior à data final.').show();
-                return;
-            }
-
-            $('#error-msg').hide();
-            $('#news-panel').hide();
-            $('#chart-loader').show();
-
-            // update export link
-            $('#btn-export').attr('href', EXPORT_URL + '?from=' + from + '&to=' + to);
-
-            // update URL without reload
-            const url = new URL(window.location.href);
-            url.searchParams.set('from', from);
-            url.searchParams.set('to', to);
-            window.history.replaceState({}, '', url);
-
-            $.ajax({
-                    url: API_URL,
-                    data: {
-                        from: from,
-                        to: to
-                    },
-                    dataType: 'json',
-                    timeout: 30000,
-                })
-                .done(function(data) {
-                    $('#chart-loader').hide();
-                    if (!data.rows || data.rows.length === 0) {
-                        $('#error-msg').text('Nenhum dado encontrado para o período selecionado.').show();
-                        return;
+                        grid: { color: '#21262d' },
                     }
-                    buildChart(data);
-                })
-                .fail(function(jqXHR, status) {
-                    $('#chart-loader').hide();
-                    const msg = status === 'timeout' ?
-                        'A requisição demorou muito. Tente um período menor.' :
-                        'Erro ao buscar os dados (' + (jqXHR.status || status) +
-                        '). Verifique os parâmetros e tente novamente.';
-                    $('#error-msg').text(msg).show();
-                });
+                },
+                onClick: function (evt) {
+                    const elements = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        showNewsPanel(reportData.rows[elements[0].index]);
+                    }
+                },
+            }
+        });
+    }
+
+    function loadData() {
+        const from = $('#date-from').val();
+        const to   = $('#date-to').val();
+
+        if (!from || !to) {
+            $('#error-msg').text('Preencha os dois campos de data.').show();
+            return;
+        }
+        if (from > to) {
+            $('#error-msg').text('A data inicial não pode ser posterior à data final.').show();
+            return;
         }
 
-        /* ── Events ────────────────────────────────────────────── */
-        $(function() {
-            // set initial export link
-            $('#btn-export').attr('href', EXPORT_URL + '?from=' + DEFAULT_FROM + '&to=' + DEFAULT_TO);
+        $('#error-msg').hide();
+        $('#news-panel').hide();
+        $('#chart-loader').show();
 
-            $('#btn-filter').on('click', loadData);
+        $('#btn-export').attr('href', EXPORT_URL + '?from=' + from + '&to=' + to);
 
-            $('#date-from, #date-to').on('keydown', function(e) {
-                if (e.key === 'Enter') loadData();
-            });
+        const url = new URL(window.location.href);
+        url.searchParams.set('from', from);
+        url.searchParams.set('to', to);
+        window.history.replaceState({}, '', url);
 
-            $('#btn-reset').on('click', function() {
-                $('#date-from').val(DEFAULT_FROM);
-                $('#date-to').val(DEFAULT_TO);
-                loadData();
-            });
+        $.ajax({
+            url: API_URL,
+            data: { from: from, to: to },
+            dataType: 'json',
+            timeout: 30000,
+        })
+        .done(function (data) {
+            $('#chart-loader').hide();
+            if (!data.rows || data.rows.length === 0) {
+                $('#error-msg').text('Nenhum dado encontrado para o período selecionado.').show();
+                return;
+            }
+            buildChart(data);
+        })
+        .fail(function (jqXHR, status) {
+            $('#chart-loader').hide();
+            const msg = status === 'timeout'
+                ? 'A requisição demorou muito. Tente um período menor.'
+                : 'Erro ao buscar os dados (' + (jqXHR.status || status) + '). Verifique os parâmetros e tente novamente.';
+            $('#error-msg').text(msg).show();
+        });
+    }
 
-            $('#news-panel-close').on('click', function() {
-                $('#news-panel').slideUp(150);
-            });
-
+    $(function () {
+        $('#btn-export').attr('href', EXPORT_URL + '?from=' + DEFAULT_FROM + '&to=' + DEFAULT_TO);
+        $('#btn-filter').on('click', loadData);
+        $('#date-from, #date-to').on('keydown', function (e) { if (e.key === 'Enter') loadData(); });
+        $('#btn-reset').on('click', function () {
+            $('#date-from').val(DEFAULT_FROM);
+            $('#date-to').val(DEFAULT_TO);
             loadData();
         });
-    </script>
-</body>
-
-</html>
+        $('#news-panel-close').on('click', function () { $('#news-panel').slideUp(150); });
+        loadData();
+    });
+</script>
+@endpush
