@@ -3,88 +3,72 @@
 @section('title', 'Dashboard - Anality')
 
 @section('content')
-    <div class="container-fluid py-5">
-        <!-- Cabeçalho -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="display-4">Dashboard de Análise</h1>
-                <p class="text-muted">Análise Integrada de Ataques Hackers e Notícias</p>
+    <div class="container-fluid py-4">
+
+        {{-- Page Header --}}
+        <div class="page-header mb-4">
+            <p class="page-header-tag">// visão geral</p>
+            <h1 class="page-header-title">Dashboard de Análise</h1>
+            <p class="page-header-sub">análise integrada de ataques hackers e notícias</p>
+        </div>
+
+        {{-- KPI Row --}}
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <span class="kpi-value danger">{{ $stats['critical_attacks'] }}</span>
+                    <span class="kpi-label">Ataques Críticos</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <span class="kpi-value">{{ $stats['total_attacks'] }}</span>
+                    <span class="kpi-label">Total de Ataques</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <span class="kpi-value ok">{{ $stats['total_news'] }}</span>
+                    <span class="kpi-label">Notícias</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <span class="kpi-value warn">{{ $stats['total_correlations'] }}</span>
+                    <span class="kpi-label">Correlações</span>
+                </div>
             </div>
         </div>
 
-        <!-- Painel de Ações Rápidas -->
-        <div class="row mb-5">
+        {{-- Ações Rápidas --}}
+        <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <button class="btn btn-primary btn-lg w-100" id="scrapeAttacksBtn">
+                <button class="btn btn-primary w-100" id="scrapeAttacksBtn">
                     <i class="bi bi-shield-exclamation"></i> Atualizar Ataques
                 </button>
             </div>
             <div class="col-md-4">
-                <button class="btn btn-info btn-lg w-100" id="scrapeNewsBtn">
+                <button class="btn btn-info w-100" id="scrapeNewsBtn">
                     <i class="bi bi-newspaper"></i> Atualizar Notícias
                 </button>
             </div>
             <div class="col-md-4">
-                <button class="btn btn-success btn-lg w-100" id="analyzeBtn">
+                <button class="btn btn-success w-100" id="analyzeBtn">
                     <i class="bi bi-graph-up"></i> Executar Análise Completa
                 </button>
             </div>
         </div>
 
-        <!-- Estatísticas -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card border-danger">
-                    <div class="card-body">
-                        <h5 class="card-title text-danger">
-                            <i class="bi bi-exclamation-triangle"></i> Ataques Críticos
-                        </h5>
-                        <p class="card-text display-5">{{ $stats['critical_attacks'] }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-primary">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">
-                            <i class="bi bi-shield-exclamation"></i> Total de Ataques
-                        </h5>
-                        <p class="card-text display-5">{{ $stats['total_attacks'] }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-info">
-                    <div class="card-body">
-                        <h5 class="card-title text-info">
-                            <i class="bi bi-newspaper"></i> Notícias
-                        </h5>
-                        <p class="card-text display-5">{{ $stats['total_news'] }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-success">
-                    <div class="card-body">
-                        <h5 class="card-title text-success">
-                            <i class="bi bi-link-45deg"></i> Correlações
-                        </h5>
-                        <p class="card-text display-5">{{ $stats['total_correlations'] }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Linha 2 -->
-        <div class="row mb-4">
+        {{-- Tabelas Recentes --}}
+        <div class="row g-3 mb-4">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header">
                         <h5>Ataques Recentes</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-sm">
+                            <table class="table table-sm mb-0">
                                 <thead>
                                     <tr>
                                         <th>Tipo</th>
@@ -101,8 +85,7 @@
                                                 </a>
                                             </td>
                                             <td>
-                                                <span
-                                                    class="badge bg-{{ \App\Helpers\ViewHelper::severityColor($attack->severity) }}">
+                                                <span class="badge badge-{{ $attack->severity }}">
                                                     {{ ucfirst($attack->severity) }}
                                                 </span>
                                             </td>
@@ -110,7 +93,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="text-center text-muted">Nenhum ataque registrado</td>
+                                            <td colspan="3" class="text-center text-muted py-4">Nenhum ataque registrado</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -122,12 +105,12 @@
 
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-info text-white">
+                    <div class="card-header">
                         <h5>Notícias Recentes</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-sm">
+                            <table class="table table-sm mb-0">
                                 <thead>
                                     <tr>
                                         <th>Título</th>
@@ -144,8 +127,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="text-center text-muted">Nenhuma notícia registrada
-                                            </td>
+                                            <td colspan="3" class="text-center text-muted py-4">Nenhuma notícia registrada</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -156,16 +138,16 @@
             </div>
         </div>
 
-        <!-- Correlações principais -->
+        {{-- Correlações Mais Fortes --}}
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-success text-white">
+                    <div class="card-header">
                         <h5>Correlações Mais Fortes</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table mb-0">
                                 <thead>
                                     <tr>
                                         <th>Ataque</th>
@@ -180,22 +162,20 @@
                                             <td>{{ Str::limit($correlation->hackerAttack->title, 40) }}</td>
                                             <td>{{ Str::limit($correlation->news->title, 40) }}</td>
                                             <td>
-                                                <div class="progress" style="height: 20px;">
-                                                    <div class="progress-bar bg-success"
+                                                <div class="progress" style="height: 18px; width: 120px;">
+                                                    <div class="progress-bar"
                                                         style="width: {{ $correlation->correlation_score }}%">
                                                         {{ round($correlation->correlation_score) }}%
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <span
-                                                    class="badge bg-secondary">{{ $correlation->correlation_type }}</span>
+                                                <span class="badge bg-secondary">{{ $correlation->correlation_type }}</span>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">Nenhuma correlação encontrada
-                                            </td>
+                                            <td colspan="4" class="text-center text-muted py-4">Nenhuma correlação encontrada</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -205,23 +185,25 @@
                 </div>
             </div>
         </div>
+
+        {{-- Page Footer --}}
+        <div class="page-footer d-flex justify-content-between mt-4">
+            <span>SISTEMA DE CORRELAÇÃO DE ATAQUES v1.0</span>
+            <span id="dash-footer-ts"></span>
+        </div>
     </div>
 
+    @push('scripts')
     <script>
+        document.getElementById('dash-footer-ts').textContent = 'gerado em ' + new Date().toLocaleString('pt-BR');
         const apiBase = '{{ url('/api') }}';
 
         document.getElementById('scrapeAttacksBtn').addEventListener('click', function() {
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
-
-            fetch(`${apiBase}/scrape/attacks`, {
-                    method: 'POST'
-                })
+            fetch(`${apiBase}/scrape/attacks`, { method: 'POST' })
                 .then(r => r.json())
-                .then(data => {
-                    alert('✓ ' + data.message);
-                    location.reload();
-                })
+                .then(data => { alert('✓ ' + data.message); location.reload(); })
                 .catch(e => alert('✗ Erro: ' + e.message))
                 .finally(() => {
                     this.disabled = false;
@@ -232,15 +214,9 @@
         document.getElementById('scrapeNewsBtn').addEventListener('click', function() {
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
-
-            fetch(`${apiBase}/scrape/news`, {
-                    method: 'POST'
-                })
+            fetch(`${apiBase}/scrape/news`, { method: 'POST' })
                 .then(r => r.json())
-                .then(data => {
-                    alert('✓ ' + data.message);
-                    location.reload();
-                })
+                .then(data => { alert('✓ ' + data.message); location.reload(); })
                 .catch(e => alert('✗ Erro: ' + e.message))
                 .finally(() => {
                     this.disabled = false;
@@ -251,15 +227,9 @@
         document.getElementById('analyzeBtn').addEventListener('click', function() {
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
-
-            fetch(`${apiBase}/analyze/full`, {
-                    method: 'POST'
-                })
+            fetch(`${apiBase}/analyze/full`, { method: 'POST' })
                 .then(r => r.json())
-                .then(data => {
-                    alert('✓ Análise completa: ' + JSON.stringify(data.data));
-                    location.reload();
-                })
+                .then(data => { alert('✓ Análise completa: ' + JSON.stringify(data.data)); location.reload(); })
                 .catch(e => alert('✗ Erro: ' + e.message))
                 .finally(() => {
                     this.disabled = false;
@@ -267,4 +237,5 @@
                 });
         });
     </script>
+    @endpush
 @endsection

@@ -1,0 +1,755 @@
+/* =============================================================
+   ANALITY — Design System / Theme
+   Dark cybersecurity aesthetic: scanlines + mono typography
+   ============================================================= */
+
+/* --- CSS Variables ------------------------------------------ */
+:root {
+    --bg: #080c10;
+    --surface: #0d1520;
+    --border: #1a2d45;
+    --accent: #00e5ff;
+    --danger: #ff3b5c;
+    --warn: #ffb800;
+    --ok: #00e676;
+    --text: #000000;
+    --muted: #4a6480;
+}
+
+/* --- Base ---------------------------------------------------- */
+html,
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: "Barlow", sans-serif;
+    font-weight: 300;
+}
+
+/* Scanline overlay */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 229, 255, 0.015) 2px,
+        rgba(0, 229, 255, 0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+/* --- Navbar -------------------------------------------------- */
+.navbar {
+    background: var(--surface) !important;
+    border-bottom: 1px solid var(--border);
+}
+
+.navbar-brand {
+    font-family: "Share Tech Mono", monospace;
+    color: var(--accent) !important;
+    letter-spacing: 0.1em;
+    font-size: 14px;
+}
+
+.navbar-brand::before {
+    content: "// ";
+    opacity: 0.5;
+}
+
+.navbar-toggler {
+    border-color: var(--border);
+}
+
+.navbar-toggler-icon {
+    filter: invert(70%) sepia(50%) saturate(400%) hue-rotate(160deg);
+}
+
+.nav-link {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted) !important;
+    transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--accent) !important;
+}
+
+/* Dropdown */
+.dropdown-menu {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.dropdown-item {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition:
+        color 0.2s,
+        background 0.2s;
+}
+
+.dropdown-item:hover,
+.dropdown-item.active {
+    background: rgba(0, 229, 255, 0.06);
+    color: var(--accent);
+}
+
+/* --- Cards --------------------------------------------------- */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: none;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+}
+
+.card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+}
+
+.card-header h5,
+.card-header h4,
+.card-header h3 {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+}
+
+/* Override coloured card headers */
+.card-header.bg-primary,
+.card-header.bg-info,
+.card-header.bg-success,
+.card-header.bg-danger,
+.card-header.bg-warning,
+.card-header.bg-dark,
+.card-header.bg-secondary,
+.card-header.bg-light {
+    background: transparent !important;
+    color: var(--muted) !important;
+}
+
+.card-title {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+/* --- Tables -------------------------------------------------- */
+.table {
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.table thead th {
+    background: var(--surface);
+    color: var(--muted);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Override table-dark thead */
+.table-dark,
+.table thead.table-dark tr th {
+    background: var(--surface) !important;
+    color: var(--muted) !important;
+    border-color: var(--border) !important;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.table tbody tr:hover,
+.table-hover tbody tr:hover {
+    background: rgba(0, 229, 255, 0.04) !important;
+    color: var(--text);
+}
+
+.table tbody td {
+    font-size: 13px;
+    font-weight: 300;
+    vertical-align: middle;
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.table tbody td a {
+    color: var(--accent);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(0, 229, 255, 0.02);
+    color: var(--text);
+}
+
+/* --- KPI Cards ---------------------------------------------- */
+.kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    text-align: center;
+    min-width: 110px;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.4;
+}
+
+.kpi-value {
+    display: block;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 24px;
+    color: var(--accent);
+}
+
+.kpi-value.danger {
+    color: var(--danger);
+}
+.kpi-value.warn {
+    color: var(--warn);
+}
+.kpi-value.ok {
+    color: var(--ok);
+}
+
+.kpi-label {
+    display: block;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+/* --- Badges -------------------------------------------------- */
+.badge {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.badge-critical,
+.badge.bg-danger {
+    background: rgba(255, 59, 92, 0.15) !important;
+    color: var(--danger) !important;
+    border: 1px solid var(--danger);
+}
+
+.badge-high,
+.badge.bg-warning {
+    background: rgba(255, 184, 0, 0.15) !important;
+    color: var(--warn) !important;
+    border: 1px solid var(--warn);
+}
+
+.badge-medium,
+.badge.bg-info,
+.badge.bg-primary {
+    background: rgba(0, 229, 255, 0.1) !important;
+    color: var(--accent) !important;
+    border: 1px solid var(--accent);
+}
+
+.badge-low,
+.badge.bg-success {
+    background: rgba(0, 230, 118, 0.1) !important;
+    color: var(--ok) !important;
+    border: 1px solid var(--ok);
+}
+
+.badge.bg-secondary {
+    background: rgba(74, 100, 128, 0.2) !important;
+    color: var(--muted) !important;
+    border: 1px solid var(--border);
+}
+
+/* --- Buttons ------------------------------------------------- */
+.btn {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    border-radius: 6px;
+}
+
+.btn-primary {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background: rgba(0, 229, 255, 0.1) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
+.btn-secondary,
+.btn-outline-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+
+.btn-secondary:hover,
+.btn-outline-secondary:hover {
+    border-color: var(--muted);
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+}
+
+.btn-outline-primary:hover {
+    background: rgba(0, 229, 255, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.btn-success,
+.btn-outline-success {
+    background: transparent;
+    border: 1px solid var(--ok);
+    color: var(--ok);
+}
+
+.btn-success:hover,
+.btn-outline-success:hover {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: var(--ok);
+    color: var(--ok);
+}
+
+.btn-info,
+.btn-outline-info {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+}
+
+.btn-info:hover,
+.btn-outline-info:hover {
+    background: rgba(0, 229, 255, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.btn-danger,
+.btn-outline-danger {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+.btn-danger:hover,
+.btn-outline-danger:hover {
+    background: rgba(255, 59, 92, 0.1);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.btn-lg {
+    font-size: 12px;
+    padding: 0.65rem 1.4rem;
+}
+
+.btn-sm {
+    font-size: 10px;
+    padding: 3px 10px;
+}
+
+/* --- Inputs / Forms ----------------------------------------- */
+.form-control,
+.form-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.form-control::placeholder {
+    color: var(--muted);
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: var(--bg);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+}
+
+.form-select option {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.form-label {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.form-check-input {
+    background-color: var(--bg);
+    border-color: var(--border);
+}
+
+.form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.form-check-label {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    color: var(--text);
+}
+
+/* Accordion */
+.accordion-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px !important;
+    overflow: hidden;
+}
+
+.accordion-button {
+    background: var(--surface);
+    color: var(--muted);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.accordion-button:not(.collapsed) {
+    background: rgba(0, 229, 255, 0.05);
+    color: var(--accent);
+    box-shadow: none;
+}
+
+.accordion-button::after {
+    filter: invert(70%) sepia(50%) saturate(400%) hue-rotate(160deg);
+}
+
+.accordion-body {
+    background: var(--surface);
+    color: var(--text);
+}
+
+/* --- Tabs ---------------------------------------------------- */
+.nav-tabs {
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-tabs .nav-link {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: none;
+    padding: 8px 16px;
+    background: none;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--accent);
+    background: none;
+    border: none;
+    border-bottom: 2px solid var(--accent);
+    box-shadow: 0 4px 12px rgba(0, 229, 255, 0.15);
+}
+
+.tab-content {
+    padding-top: 16px;
+}
+
+/* --- Alerts -------------------------------------------------- */
+.alert {
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 300;
+    border: none;
+}
+
+.alert-success {
+    background: rgba(0, 230, 118, 0.1);
+    color: var(--ok);
+    border: 1px solid var(--ok);
+}
+
+.alert-danger {
+    background: rgba(255, 59, 92, 0.1);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.alert-info {
+    background: rgba(0, 229, 255, 0.07);
+    color: var(--accent);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.alert-warning {
+    background: rgba(255, 184, 0, 0.1);
+    color: var(--warn);
+    border: 1px solid var(--warn);
+}
+
+.alert-heading {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.btn-close {
+    filter: invert(100%) brightness(60%);
+}
+
+/* --- Progress bars ------------------------------------------ */
+.progress {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.progress-bar {
+    background: var(--accent);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+}
+
+.progress-bar.bg-success {
+    background: var(--ok) !important;
+}
+.progress-bar.bg-info {
+    background: var(--accent) !important;
+}
+.progress-bar.bg-warning {
+    background: var(--warn) !important;
+}
+.progress-bar.bg-danger {
+    background: var(--danger) !important;
+}
+
+/* --- Page Header -------------------------------------------- */
+.page-header-tag {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    opacity: 0.9;
+}
+
+.page-header-title {
+    font-family: "Barlow", sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #e8f4ff;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+
+.page-header-sub {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+/* --- Page Footer -------------------------------------------- */
+.page-footer {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+/* --- Misc ---------------------------------------------------- */
+code,
+pre {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: rgba(0, 229, 255, 0.06);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+pre {
+    padding: 12px 16px;
+    border-radius: 6px;
+    color: var(--text);
+    overflow-x: auto;
+}
+
+pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+}
+
+hr {
+    border-color: var(--border);
+    opacity: 1;
+}
+
+/* Pagination */
+.pagination .page-link {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--muted);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+}
+
+.pagination .page-link:hover {
+    background: rgba(0, 229, 255, 0.08);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.pagination .page-item.active .page-link {
+    background: rgba(0, 229, 255, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.pagination .page-item.disabled .page-link {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--muted);
+    opacity: 0.4;
+}
+
+/* text-muted override */
+.text-muted {
+    color: var(--muted) !important;
+}
+
+/* bg-light override */
+.bg-light {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Dropzone */
+#dropzone {
+    border-color: var(--border) !important;
+    background: rgba(0, 229, 255, 0.02);
+    transition:
+        background 0.15s,
+        border-color 0.15s;
+}
+
+#dropzone:hover,
+#dropzone.dragover {
+    border-color: var(--accent) !important;
+    background: rgba(0, 229, 255, 0.06) !important;
+}
+
+#dropzone i {
+    color: var(--accent) !important;
+}
+
+/* Timeline */
+.timeline::before {
+    background: var(--border);
+}
+
+/* Spinner */
+.spinner-border {
+    color: var(--accent);
+}
+
+/* Chart.js canvas — keep transparent */
+canvas {
+    max-width: 100%;
+}
+
+/* display-5 */
+.display-5 {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 2rem;
+    font-weight: normal;
+    color: var(--accent);
+}

@@ -5,13 +5,16 @@
 @section('content')
     <div class="container-fluid py-4">
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-4 align-items-center">
             <div class="col">
-                <h1 class="mb-0"><i class="bi bi-table text-danger"></i> Relatório de Ataques por Semana</h1>
-                <p class="text-muted mb-0">Ataques e notícias relacionadas agrupados em intervalos de 7 dias.</p>
+                <div class="page-header">
+                    <p class="page-header-tag">// relatórios</p>
+                    <h1 class="page-header-title">Relatório de Ataques por Semana</h1>
+                    <p class="page-header-sub">ataques e notícias agrupados em intervalos de 7 dias</p>
+                </div>
             </div>
             <div class="col-auto">
-                <a href="{{ route('report-attacks-chart') }}" class="btn btn-outline-primary">
+                <a href="{{ route('report-attacks-chart') }}" class="btn btn-primary">
                     <i class="bi bi-bar-chart-fill"></i> Ver Gráfico
                 </a>
             </div>
@@ -22,12 +25,12 @@
             <div class="card-body">
                 <form method="GET" action="{{ route('report-attacks-view') }}" class="row g-3 align-items-end">
                     <div class="col-md-3">
-                        <label for="from" class="form-label fw-semibold">Data Inicial</label>
+                        <label for="from" class="form-label">Data Inicial</label>
                         <input type="text" id="from" name="from" class="form-control" placeholder="dd/mm/aaaa"
                             value="{{ $from->format('d/m/Y') }}">
                     </div>
                     <div class="col-md-3">
-                        <label for="to" class="form-label fw-semibold">Data Final</label>
+                        <label for="to" class="form-label">Data Final</label>
                         <input type="text" id="to" name="to" class="form-control" placeholder="dd/mm/aaaa"
                             value="{{ $to->format('d/m/Y') }}">
                     </div>
@@ -49,19 +52,15 @@
 
         {{-- Tabela --}}
         <div class="card">
-            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="bi bi-shield-exclamation"></i>
-                    Períodos — {{ $from->format('d/m/Y') }} a {{ $to->format('d/m/Y') }}
-                </h5>
-                <span class="badge bg-light text-danger fs-6">
-                    {{ $rows->count() }} período(s) · {{ $rows->sum('attack_count') }} ataques
-                </span>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Períodos — {{ $from->format('d/m/Y') }} a {{ $to->format('d/m/Y') }}</h5>
+                <span class="badge badge-critical">{{ $rows->count() }} períodos · {{ $rows->sum('attack_count') }}
+                    ataques</span>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle mb-0">
-                    <thead class="table-dark">
+                    <thead>
                         <tr>
                             <th style="width:14%">Período</th>
                             <th class="text-center" style="width:10%">Qtd. Ataques</th>
@@ -82,9 +81,9 @@
 
                                 <td class="text-center">
                                     @if ($row['attack_count'] > 0)
-                                        <span class="badge bg-danger fs-6">{{ $row['attack_count'] }}</span>
+                                        <span class="badge badge-critical">{{ $row['attack_count'] }}</span>
                                     @else
-                                        <span class="badge bg-secondary fs-6">0</span>
+                                        <span class="badge bg-secondary">0</span>
                                     @endif
                                 </td>
 

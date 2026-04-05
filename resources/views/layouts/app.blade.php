@@ -6,51 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Anality')</title>
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Anality Theme -->
+    <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        nav.navbar {
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
-        }
-
-        .card {
-            box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
-            border: none;
-            margin-bottom: 1.5rem;
-        }
-
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, .05);
-        }
-
-        .display-5 {
-            font-size: 2.5rem;
-            font-weight: 300;
-        }
-
-        .btn-lg {
-            font-size: 1.1rem;
-            padding: 0.8rem 1.5rem;
-        }
-    </style>
+    @stack('styles')
 </head>
 
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="bi bi-shield-exclamation"></i> <strong>Anality</strong>
-            </a>
+            <a class="navbar-brand" href="{{ route('dashboard') }}">Anality</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -99,6 +76,7 @@
             </div>
         </div>
     </nav>
+    </nav>
 
     <!-- Main Content -->
     <main class="py-4">
@@ -129,15 +107,20 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white text-center py-4 mt-5">
+    <footer class="py-4 mt-5">
         <div class="container-fluid">
-            <p class="mb-0">&copy; 2026 Anality - Análise de Ataques Hackers e Notícias</p>
-            <small class="text-muted">Desenvolvido com Laravel e Laravel Boost</small>
+            <div class="page-footer d-flex justify-content-between">
+                <span>ANALITY — SISTEMA DE CORRELAÇÃO DE ATAQUES v1.0</span>
+                <span id="footer-ts"></span>
+            </div>
         </div>
     </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('footer-ts').textContent = 'gerado em ' + new Date().toLocaleString('pt-BR');
+    </script>
 
     @stack('scripts')
 </body>

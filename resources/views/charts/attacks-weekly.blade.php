@@ -3,12 +3,15 @@
 @section('title', 'Ataques por Semana - Anality')
 
 @section('content')
-    <div class="container-fluid py-5">
+    <div class="container-fluid py-4">
 
         <div class="row mb-4">
             <div class="col-12">
-                <h1 class="mb-1"><i class="bi bi-bar-chart-line-fill text-primary"></i> Ataques por Semana</h1>
-                <p class="text-muted">Quantidade total de ataques agrupados em intervalos de 7 dias.</p>
+                <div class="page-header">
+                    <p class="page-header-tag">// gráficos</p>
+                    <h1 class="page-header-title">Ataques por Semana</h1>
+                    <p class="page-header-sub">quantidade total de ataques agrupados em intervalos de 7 dias</p>
+                </div>
             </div>
         </div>
 
@@ -18,12 +21,12 @@
                 <form id="filterForm" method="GET" action="{{ route('charts.attacks-weekly') }}"
                     class="row g-3 align-items-end">
                     <div class="col-md-4">
-                        <label for="date_from" class="form-label fw-semibold">Data Inicial</label>
+                        <label for="date_from" class="form-label">Data Inicial</label>
                         <input type="date" id="date_from" name="date_from" class="form-control"
                             value="{{ $dateFrom->toDateString() }}" max="{{ $dateTo->toDateString() }}">
                     </div>
                     <div class="col-md-4">
-                        <label for="date_to" class="form-label fw-semibold">Data Final</label>
+                        <label for="date_to" class="form-label">Data Final</label>
                         <input type="date" id="date_to" name="date_to" class="form-control"
                             value="{{ $dateTo->toDateString() }}" min="{{ $dateFrom->toDateString() }}">
                     </div>
@@ -41,14 +44,10 @@
 
         {{-- Gráfico --}}
         <div class="card">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="bi bi-calendar-week"></i>
-                    Ataques semanais — {{ $dateFrom->format('d/m/Y') }} a {{ $dateTo->format('d/m/Y') }}
-                </h5>
-                <span class="badge bg-light text-primary fs-6">
-                    {{ count($chartData) }} {{ Str::plural('semana', count($chartData)) }}
-                </span>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Ataques semanais — {{ $dateFrom->format('d/m/Y') }} a {{ $dateTo->format('d/m/Y') }}</h5>
+                <span class="badge badge-medium">{{ count($chartData) }}
+                    {{ Str::plural('semana', count($chartData)) }}</span>
             </div>
             <div class="card-body">
                 @if (count($chartData) === 0)
@@ -64,11 +63,8 @@
         {{-- Gráfico de Linha --}}
         @if (count($chartData) > 0)
             <div class="card mt-4">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-graph-up"></i>
-                        Tendência semanal — {{ $dateFrom->format('d/m/Y') }} a {{ $dateTo->format('d/m/Y') }}
-                    </h5>
+                <div class="card-header">
+                    <h5>Tendência semanal — {{ $dateFrom->format('d/m/Y') }} a {{ $dateTo->format('d/m/Y') }}</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="weeklyAttacksLineChart" style="max-height: 320px;"></canvas>
@@ -79,12 +75,12 @@
         {{-- Tabela de dados --}}
         @if (count($chartData) > 0)
             <div class="card mt-4">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0"><i class="bi bi-table"></i> Dados por Intervalo</h5>
+                <div class="card-header">
+                    <h5>Dados por Intervalo</h5>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-striped table-hover mb-0">
-                        <thead class="table-dark">
+                    <table class="table table-hover mb-0">
+                        <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Intervalo</th>
@@ -135,11 +131,11 @@
 
             // Cores: vermelho para picos, azul para valores normais
             const bgColors = totals.map(v => {
-                if (maxVal === 0) return 'rgba(54, 162, 235, 0.7)';
+                if (maxVal === 0) return 'rgba(0,229,255,0.5)';
                 const ratio = v / maxVal;
-                if (ratio >= 0.8) return 'rgba(220, 53, 69, 0.8)';
-                if (ratio >= 0.5) return 'rgba(255, 193, 7, 0.8)';
-                return 'rgba(54, 162, 235, 0.7)';
+                if (ratio >= 0.8) return 'rgba(255,59,92,0.7)';
+                if (ratio >= 0.5) return 'rgba(255,184,0,0.7)';
+                return 'rgba(0,229,255,0.5)';
             });
 
             const ctx = document.getElementById('weeklyAttacksChart').getContext('2d');
@@ -153,14 +149,14 @@
                         label: 'Total de Ataques',
                         data: totals,
                         fill: true,
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        borderColor: 'rgba(13, 110, 253, 0.9)',
+                        backgroundColor: 'rgba(0,229,255,0.06)',
+                        borderColor: 'rgba(0,229,255,0.9)',
                         pointBackgroundColor: totals.map(v => {
-                            if (maxVal === 0) return 'rgba(13, 110, 253, 0.9)';
+                            if (maxVal === 0) return 'rgba(0,229,255,0.9)';
                             const ratio = v / maxVal;
-                            if (ratio >= 0.8) return 'rgba(220, 53, 69, 1)';
-                            if (ratio >= 0.5) return 'rgba(255, 193, 7, 1)';
-                            return 'rgba(13, 110, 253, 0.9)';
+                            if (ratio >= 0.8) return 'rgba(255,59,92,1)';
+                            if (ratio >= 0.5) return 'rgba(255,184,0,1)';
+                            return 'rgba(0,229,255,0.9)';
                         }),
                         pointRadius: 5,
                         pointHoverRadius: 7,
@@ -186,16 +182,23 @@
                             title: {
                                 display: true,
                                 text: 'Intervalo Semanal',
+                                color: '#4a6480',
                                 font: {
-                                    weight: 'bold'
+                                    weight: 'bold',
+                                    family: "'Share Tech Mono', monospace"
                                 }
                             },
                             ticks: {
                                 maxRotation: 45,
                                 minRotation: 30,
+                                color: '#4a6480',
                                 font: {
-                                    size: 11
+                                    size: 10,
+                                    family: "'Share Tech Mono', monospace"
                                 }
+                            },
+                            grid: {
+                                color: '#1a2d45'
                             }
                         },
                         y: {
@@ -203,13 +206,23 @@
                             title: {
                                 display: true,
                                 text: 'Quantidade de Ataques',
+                                color: '#4a6480',
                                 font: {
-                                    weight: 'bold'
+                                    weight: 'bold',
+                                    family: "'Share Tech Mono', monospace"
                                 }
                             },
                             ticks: {
                                 stepSize: 1,
-                                precision: 0
+                                precision: 0,
+                                color: '#4a6480',
+                                font: {
+                                    size: 10,
+                                    family: "'Share Tech Mono', monospace"
+                                }
+                            },
+                            grid: {
+                                color: '#1a2d45'
                             }
                         }
                     }
@@ -247,16 +260,23 @@
                             title: {
                                 display: true,
                                 text: 'Intervalo Semanal',
+                                color: '#4a6480',
                                 font: {
-                                    weight: 'bold'
+                                    weight: 'bold',
+                                    family: "'Share Tech Mono', monospace"
                                 }
                             },
                             ticks: {
                                 maxRotation: 45,
                                 minRotation: 30,
+                                color: '#4a6480',
                                 font: {
-                                    size: 11
+                                    size: 10,
+                                    family: "'Share Tech Mono', monospace"
                                 }
+                            },
+                            grid: {
+                                color: '#1a2d45'
                             }
                         },
                         y: {
@@ -264,13 +284,23 @@
                             title: {
                                 display: true,
                                 text: 'Quantidade de Ataques',
+                                color: '#4a6480',
                                 font: {
-                                    weight: 'bold'
+                                    weight: 'bold',
+                                    family: "'Share Tech Mono', monospace"
                                 }
                             },
                             ticks: {
                                 stepSize: 1,
-                                precision: 0
+                                precision: 0,
+                                color: '#4a6480',
+                                font: {
+                                    size: 10,
+                                    family: "'Share Tech Mono', monospace"
+                                }
+                            },
+                            grid: {
+                                color: '#1a2d45'
                             }
                         }
                     }
@@ -301,7 +331,7 @@
                         const newMax = Math.max(...newTotals);
 
                         const newColors = newTotals.map(v => {
-                            if (newMax === 0) return 'rgba(54, 162, 235, 0.7)';
+                            if (newMax === 0) return 'rgba(0,229,255,0.5)';
                             const ratio = v / newMax;
                             if (ratio >= 0.8) return 'rgba(220, 53, 69, 0.8)';
                             if (ratio >= 0.5) return 'rgba(255, 193, 7, 0.8)';
@@ -311,9 +341,9 @@
                         const newPointColors = newTotals.map(v => {
                             if (newMax === 0) return 'rgba(13, 110, 253, 0.9)';
                             const ratio = v / newMax;
-                            if (ratio >= 0.8) return 'rgba(220, 53, 69, 1)';
-                            if (ratio >= 0.5) return 'rgba(255, 193, 7, 1)';
-                            return 'rgba(13, 110, 253, 0.9)';
+                            if (ratio >= 0.8) return 'rgba(255,59,92,1)';
+                            if (ratio >= 0.5) return 'rgba(255,184,0,1)';
+                            return 'rgba(0,229,255,0.9)';
                         });
 
                         chart.data.labels = newLabels;
