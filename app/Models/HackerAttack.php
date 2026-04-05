@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class HackerAttack extends Model
 {
     protected $fillable = [
+        'import_batch_id',
         'title',
         'description',
         'attack_type',

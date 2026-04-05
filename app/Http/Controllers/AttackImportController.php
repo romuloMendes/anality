@@ -59,7 +59,11 @@ class AttackImportController extends Controller
         try {
             $file = $request->file('json_file');
             $jsonContent = File::get($file->getPathname());
-            $result      = $this->importService->importAttacksFromJsonString($jsonContent);
+            $result      = $this->importService->importAttacksFromJsonString(
+                $jsonContent,
+                $file->getClientOriginalName(),
+                $file->getSize()
+            );
 
             if ($result['success']) {
                 return redirect()->route('attacks-import.form')
@@ -113,7 +117,11 @@ class AttackImportController extends Controller
         try {
             $file        = $request->file('json_file');
             $jsonContent = File::get($file->getPathname());
-            $result      = $this->importService->importAttacksFromJsonString($jsonContent);
+            $result      = $this->importService->importAttacksFromJsonString(
+                $jsonContent,
+                $file->getClientOriginalName(),
+                $file->getSize()
+            );
 
             return response()->json($result, $result['success'] ? 200 : 422);
         } catch (\Exception $e) {

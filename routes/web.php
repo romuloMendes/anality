@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\AttackImportController;
+use App\Http\Controllers\AttackImportBatchController;
 use App\Http\Controllers\AttackReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NewsImportController;
@@ -34,9 +36,13 @@ Route::prefix('admin/news')->group(function () {
 
 // Importação de ataques
 Route::prefix('admin/attacks')->group(function () {
-    Route::get('/import', [\App\Http\Controllers\AttackImportController::class, 'showForm'])->name('attacks-import.form');
-    Route::post('/import', [\App\Http\Controllers\AttackImportController::class, 'import'])->name('attacks-import.process');
-    Route::post('/import/api', [\App\Http\Controllers\AttackImportController::class, 'importApi'])->name('attacks-import.api');
+    Route::get('/import', [AttackImportController::class, 'showForm'])->name('attacks-import.form');
+    Route::post('/import', [AttackImportController::class, 'import'])->name('attacks-import.process');
+    Route::post('/import/api', [AttackImportController::class, 'importApi'])->name('attacks-import.api');
+
+    // Gestão de lotes (uploads)
+    Route::get('/batches', [AttackImportBatchController::class, 'index'])->name('attacks-batches.index');
+    Route::delete('/batches/{batch}', [AttackImportBatchController::class, 'destroy'])->name('attacks-batches.destroy');
 });
 
 // Relatórios de ataques

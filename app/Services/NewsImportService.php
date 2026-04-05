@@ -422,21 +422,41 @@ class NewsImportService
         return min(100, round($finalScore, 2));
     }
 
-    public function importAttacksFromJsonString(string $jsonContent): array
+    public function importAttacksFromJsonString(string $jsonContent, string $filename = 'unknown.json', ?int $fileSize = null): array
     {
         $hashName   = $this->generateHashName();
         $storedPath = "imports/temp/{$hashName}.json";
 
         Storage::disk('local')->put($storedPath, $jsonContent);
 
-        $result = $this->importAttacksFromJson($storedPath);
+        // Pré-cria o batch para associar os registros durante a importação
+        $decoded = json_decode($jsonContent, true);
+        $total   = is_array($decoded) ? count($decoded) : 0;
+
+        $batch = \App\Models\AttackImportBatch::create([
+            'filename'      => $filename,
+            'file_size'     => $fileSize,
+            'total_records' => $total,
+            'imported_count' => 0,
+            'failed_count'  => 0,
+            'status'        => 'completed',
+        ]);
+
+        $result = $this->importAttacksFromJson($storedPath, $batch->id);
+
+        $batch->update([
+            'imported_count' => $result['imported'] ?? 0,
+            'failed_count'   => $result['failed'] ?? 0,
+        ]);
 
         Storage::disk('local')->delete($storedPath);
+
+        $result['batch_id'] = $batch->id;
 
         return $result;
     }
 
-    private function importAttacksFromJson(string $storedPath): array
+    private function importAttacksFromJson(string $storedPath, ?int $batchId = null): array
     {
         try {
             if (Str::startsWith($storedPath, ['/', '\\'])) {
@@ -469,7 +489,7 @@ class NewsImportService
                         throw new \Exception('Formato de item inválido na linha ' . $rowNumber);
                     }
 
-                    $this->processAttackData($item, basename($filePath));
+                    $this->processAttackData($item, basename($filePath), $batchId);
                     $this->imported++;
                 } catch (\Exception $e) {
                     $this->failed++;
@@ -503,7 +523,7 @@ class NewsImportService
         }
     }
 
-    private function processAttackData(array $data, string $sourceFile): void
+    private function processAttackData(array $data, string $sourceFile, ?int $batchId = null): void
     {
         $title          = trim($data['title'] ?? ($data['tipo_ataque'] ?? 'Ataque Desconhecido'));
         $description    = trim($data['summary'] ?? ($data['descricao'] ?? ''));
@@ -530,6 +550,7 @@ class NewsImportService
         // }
 
         \App\Models\HackerAttack::create([
+            'import_batch_id' => $batchId,
             'title'           => $title,
             'description'     => $description,
             'attack_type'     => $attackType,
