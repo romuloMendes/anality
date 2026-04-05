@@ -89,6 +89,17 @@
                                 </div>
                             </div>
 
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="deduplicate_by_date"
+                                    name="deduplicate_by_date" value="1" checked>
+                                <label class="form-check-label" for="deduplicate_by_date"
+                                    style="font-size:13px;color:var(--text);">
+                                    Remover registros duplicados pela data
+                                    <span style="color:var(--muted);font-size:11px;">— mantém apenas o primeiro por
+                                        data</span>
+                                </label>
+                            </div>
+
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary" id="submitBtn">
                                     <i class="bi bi-upload"></i> Importar Ataques
@@ -194,6 +205,8 @@
 
                 const formData = new FormData();
                 formData.append('json_file', file);
+                formData.append('deduplicate_by_date', document.getElementById('deduplicate_by_date').checked ? '1' :
+                    '0');
 
                 const progressContainer = document.getElementById('progressContainer');
                 const progressBar = document.getElementById('progressBar');
@@ -273,14 +286,20 @@
                 if (type === 'success') {
                     const failed = data.failed ?? 0;
                     const total = data.total ?? (data.imported + failed);
+                    const dedup = data.deduplicated ?? 0;
+                    const dedupCol = dedup > 0 ?
+                        `<div class="col-3"><h5 style="color:var(--warning,#ffc107)">${dedup}</h5><small>Deduplicados</small></div>` :
+                        '';
+                    const colSize = dedup > 0 ? 'col-3' : 'col-4';
                     const errs = data.errors?.length ?
                         `<hr><ul class="small mb-0">${data.errors.map(e=>`<li>${e}</li>`).join('')}</ul>` : '';
                     area.innerHTML = `<div class="alert alert-success alert-dismissible fade show mt-4">
                     <i class="bi bi-check-circle"></i> <strong>Sucesso!</strong>
                     <div class="row text-center mt-3">
-                        <div class="col-4"><h5 style="color:var(--ok)">${data.imported}</h5><small>Importados</small></div>
-                        <div class="col-4"><h5 style="color:var(--danger)">${failed}</h5><small>Falhados</small></div>
-                        <div class="col-4"><h5 style="color:var(--accent)">${total}</h5><small>Total</small></div>
+                        <div class="${colSize}"><h5 style="color:var(--ok)">${data.imported}</h5><small>Importados</small></div>
+                        <div class="${colSize}"><h5 style="color:var(--danger)">${failed}</h5><small>Falhados</small></div>
+                        ${dedupCol}
+                        <div class="${colSize}"><h5 style="color:var(--accent)">${total}</h5><small>Total</small></div>
                     </div>${errs}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
                 } else {

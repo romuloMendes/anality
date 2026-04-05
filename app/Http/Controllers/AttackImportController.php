@@ -62,7 +62,8 @@ class AttackImportController extends Controller
             $result      = $this->importService->importAttacksFromJsonString(
                 $jsonContent,
                 $file->getClientOriginalName(),
-                $file->getSize()
+                $file->getSize(),
+                $request->boolean('deduplicate_by_date')
             );
 
             if ($result['success']) {
@@ -120,7 +121,8 @@ class AttackImportController extends Controller
             $result      = $this->importService->importAttacksFromJsonString(
                 $jsonContent,
                 $file->getClientOriginalName(),
-                $file->getSize()
+                $file->getSize(),
+                $request->boolean('deduplicate_by_date')
             );
 
             return response()->json($result, $result['success'] ? 200 : 422);

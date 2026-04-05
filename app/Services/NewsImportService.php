@@ -422,16 +422,41 @@ class NewsImportService
         return min(100, round($finalScore, 2));
     }
 
-    public function importAttacksFromJsonString(string $jsonContent, string $filename = 'unknown.json', ?int $fileSize = null): array
+    public function importAttacksFromJsonString(string $jsonContent, string $filename = 'unknown.json', ?int $fileSize = null, bool $deduplicateByDate = false): array
     {
         $hashName   = $this->generateHashName();
         $storedPath = "imports/temp/{$hashName}.json";
 
-        Storage::disk('local')->put($storedPath, $jsonContent);
-
         // Pré-cria o batch para associar os registros durante a importação
         $decoded = json_decode($jsonContent, true);
-        $total   = is_array($decoded) ? count($decoded) : 0;
+
+        $deduplicatedCount = 0;
+        if ($deduplicateByDate && is_array($decoded)) {
+            $seen = [];
+            $filtered = array_values(array_filter($decoded, function ($item) use (&$seen) {
+                $rawDate = trim($item['data'] ?? ($item['date'] ?? ($item['attack_date'] ?? '')));
+                if ($rawDate === '') {
+                    return true;
+                }
+                try {
+                    $dateKey = Carbon::parse($rawDate)->toDateString();
+                } catch (\Exception $e) {
+                    return true;
+                }
+                if (isset($seen[$dateKey])) {
+                    return false;
+                }
+                $seen[$dateKey] = true;
+                return true;
+            }));
+            $deduplicatedCount = count($decoded) - count($filtered);
+            $decoded    = $filtered;
+            $jsonContent = json_encode($decoded, JSON_UNESCAPED_UNICODE);
+        }
+
+        $total = is_array($decoded) ? count($decoded) : 0;
+
+        Storage::disk('local')->put($storedPath, $jsonContent);
 
         $batch = \App\Models\AttackImportBatch::create([
             'filename'      => $filename,
@@ -451,7 +476,8 @@ class NewsImportService
 
         Storage::disk('local')->delete($storedPath);
 
-        $result['batch_id'] = $batch->id;
+        $result['batch_id']     = $batch->id;
+        $result['deduplicated'] = $deduplicatedCount;
 
         return $result;
     }
