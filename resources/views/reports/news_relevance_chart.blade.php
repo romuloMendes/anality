@@ -126,6 +126,18 @@
             gap: .4rem;
             font-size: .72rem;
             color: var(--muted);
+            cursor: pointer;
+            user-select: none;
+            transition: opacity .15s;
+        }
+
+        .legend-item:hover {
+            opacity: .75;
+        }
+
+        .legend-item.is-hidden {
+            opacity: .35;
+            text-decoration: line-through;
         }
 
         .legend-dot {
@@ -269,13 +281,13 @@
             <div class="chart-card-header">
                 <span class="chart-card-title">Notícias por Nível de Relevância · Intervalos de 7 dias</span>
                 <div class="chart-legend">
-                    <span class="legend-item">
+                    <span class="legend-item" data-series="baixo" title="Clique para ocultar/exibir">
                         <span class="legend-dot" style="background: rgba(63, 185, 80, 0.9)"></span> Baixo (1–3)
                     </span>
-                    <span class="legend-item">
+                    <span class="legend-item" data-series="medio" title="Clique para ocultar/exibir">
                         <span class="legend-dot" style="background: rgba(255, 184, 0, 0.9)"></span> Médio (4–6)
                     </span>
-                    <span class="legend-item">
+                    <span class="legend-item" data-series="alto" title="Clique para ocultar/exibir">
                         <span class="legend-dot" style="background: rgba(255, 59, 92, 0.9)"></span> Alto (7–10)
                     </span>
                 </div>
@@ -431,6 +443,15 @@
                 });
 
                 if (chart) {
+                    // Preserva o estado hidden de cada série ao re-filtrar
+                    const prevHidden = {};
+                    chart.data.datasets.forEach(ds => {
+                        prevHidden[ds.label] = ds.hidden;
+                    });
+                    datasets.forEach(ds => {
+                        if (prevHidden[ds.label]) ds.hidden = true;
+                    });
+
                     chart.data.labels = chartData.labels;
                     chart.data.datasets = datasets;
                     chart.update('active');
@@ -546,6 +567,25 @@
             </tr>
         `).join('');
             }
+
+            // ── Toggle de séries pela legenda customizada ──────────────────
+            document.querySelectorAll('.legend-item[data-series]').forEach(item => {
+                item.addEventListener('click', () => {
+                    if (!chart) return;
+
+                    const seriesName = item.dataset.series;
+                    const dataset = chart.data.datasets.find(ds => {
+                        const cfg = SERIES_CONFIG[seriesName];
+                        return cfg && ds.label === cfg.label;
+                    });
+
+                    if (!dataset) return;
+
+                    dataset.hidden = !dataset.hidden;
+                    item.classList.toggle('is-hidden', dataset.hidden);
+                    chart.update('active');
+                });
+            });
 
             // ── Eventos ────────────────────────────────────────────────────
             btnFilter.addEventListener('click', () => {
