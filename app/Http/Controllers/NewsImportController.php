@@ -145,6 +145,49 @@ class NewsImportController extends Controller
         }
     }
 
+    /**
+     * API para importação de JSON no formato semanal (Título, Resumo, Timestamp, Categoria)
+     */
+    public function importWeeklyApi(Request $request)
+    {
+        if ($this->isPostTooLarge($request)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Arquivo muito grande para envio. Limite atual: ' . $this->getReadablePostMaxSize() . '.',
+            ], 413);
+        }
+
+        if ($uploadError = $this->getUploadErrorMessage($request)) {
+            return response()->json([
+                'success' => false,
+                'error' => $uploadError,
+            ], 422);
+        }
+
+        $request->validate([
+            'json_file' => 'required|file|mimes:json,txt|mimetypes:application/json,text/plain|max:' . self::MAX_FILE_KB,
+        ], [
+            'json_file.required'  => 'Selecione um arquivo JSON',
+            'json_file.uploaded'  => 'Falha no upload. Limite atual do PHP: ' . $this->getReadableUploadMaxSize() . '.',
+            'json_file.mimes'     => 'O arquivo deve ser um JSON',
+            'json_file.mimetypes' => 'O arquivo deve ser um JSON',
+            'json_file.max'       => 'O arquivo não pode exceder 100MB',
+        ]);
+
+        try {
+            $file        = $request->file('json_file');
+            $jsonContent = File::get($file->getPathname());
+            $result      = $this->importService->importWeeklyJsonString($jsonContent);
+
+            return response()->json($result, $result['success'] ? 200 : 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     private function isPostTooLarge(Request $request): bool
     {
         $contentLength = (int) $request->server('CONTENT_LENGTH', 0);

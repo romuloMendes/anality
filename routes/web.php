@@ -32,6 +32,7 @@ Route::prefix('admin/news')->group(function () {
     Route::get('/import', [NewsImportController::class, 'showForm'])->name('news-import.form');
     Route::post('/import', [NewsImportController::class, 'import'])->name('news-import.process');
     Route::post('/import/api', [NewsImportController::class, 'importApi'])->name('news-import.api');
+    Route::post('/import/weekly/api', [NewsImportController::class, 'importWeeklyApi'])->name('news-import.weekly-api');
 });
 
 // Importação de ataques

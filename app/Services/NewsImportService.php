@@ -144,6 +144,125 @@ class NewsImportService
         return $result;
     }
 
+    public function importWeeklyJsonString(string $jsonContent): array
+    {
+        $this->imported = 0;
+        $this->failed   = 0;
+        $this->errors   = [];
+
+        try {
+            $decoded = json_decode($jsonContent, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('JSON inválido: ' . json_last_error_msg());
+            }
+
+            if (! is_array($decoded)) {
+                throw new \Exception('Formato de JSON inesperado. Deve ser array de objetos.');
+            }
+
+            $rowNumber = 0;
+            foreach ($decoded as $item) {
+                $rowNumber++;
+
+                try {
+                    if (! is_array($item)) {
+                        throw new \Exception('Formato de item inválido na linha ' . $rowNumber);
+                    }
+
+                    $this->processWeeklyData($item);
+                    $this->imported++;
+                } catch (\Exception $e) {
+                    $this->failed++;
+                    $this->errors[] = "Linha {$rowNumber}: " . $e->getMessage();
+                    Log::error("Erro na importação semanal de notícia (linha {$rowNumber})", [
+                        'error' => $e->getMessage(),
+                        'item'  => $item,
+                    ]);
+                }
+            }
+
+            return [
+                'success'  => true,
+                'imported' => $this->imported,
+                'failed'   => $this->failed,
+                'errors'   => $this->errors,
+                'total'    => $this->imported + $this->failed,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erro ao importar JSON semanal de notícias', ['error' => $e->getMessage()]);
+
+            return [
+                'success'  => false,
+                'error'    => $e->getMessage(),
+                'imported' => $this->imported,
+                'failed'   => $this->failed,
+            ];
+        }
+    }
+
+    private function processWeeklyData(array $data): void
+    {
+        $title   = trim($data['Título'] ?? $data['Titulo'] ?? '');
+        $summary = trim($data['Resumo'] ?? '');
+        $timestamp = trim($data['Timestamp'] ?? '');
+        $categoria = strtolower(trim($data['Categoria'] ?? ''));
+        $semana  = trim($data['Semana'] ?? '');
+
+        if (empty($title)) {
+            throw new \Exception('Título é obrigatório');
+        }
+
+        if (empty($timestamp)) {
+            throw new \Exception('Timestamp é obrigatório');
+        }
+
+        $publishedDate = $this->parseWeeklyTimestamp($timestamp);
+
+        $score = match ($categoria) {
+            'alto'  => 10,
+            'medio', 'médio' => 5,
+            'baixo' => 1,
+            default => 1,
+        };
+
+        $exists = News::where('title', $title)
+            ->where('published_date', $publishedDate->toDateString())
+            ->exists();
+
+        if ($exists) {
+            throw new \Exception('Notícia duplicada');
+        }
+
+        $keywords = $this->extractKeywords($title . ' ' . $summary);
+
+        News::create([
+            'title'           => $title,
+            'content'         => $summary,
+            'summary'         => $summary,
+            'source_name'     => 'Folha de S.Paulo',
+            'source_url'      => null,
+            'published_date'  => $publishedDate->toDateString(),
+            'category'        => 'Politics',
+            'keywords'        => $keywords,
+            'relevance_score' => $score,
+            'metadata'        => [
+                'imported_at' => now(),
+                'semana'      => $semana,
+                'categoria'   => $categoria,
+            ],
+        ]);
+    }
+
+    private function parseWeeklyTimestamp(string $timestamp): Carbon
+    {
+        try {
+            return Carbon::createFromFormat('d/m/Y H:i', $timestamp);
+        } catch (\Exception $e) {
+            throw new \Exception("Timestamp inválido: {$timestamp}");
+        }
+    }
+
     private function generateHashName(): string
     {
         $randomNumber = random_int(100000, 999999);
