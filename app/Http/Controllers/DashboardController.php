@@ -149,8 +149,9 @@ class DashboardController extends Controller
             : Carbon::now()->endOfDay();
 
         $chartData = $this->buildWeeklyBuckets($dateFrom, $dateTo);
+        $maxTotal  = collect($chartData)->max('total') ?? 0;
 
-        return view('charts.attacks-weekly', compact('chartData', 'dateFrom', 'dateTo'));
+        return view('charts.attacks-weekly', compact('chartData', 'dateFrom', 'dateTo', 'maxTotal'));
     }
 
     /**
@@ -167,8 +168,9 @@ class DashboardController extends Controller
         $dateTo   = Carbon::parse($request->date_to)->endOfDay();
 
         $chartData = $this->buildWeeklyBuckets($dateFrom, $dateTo);
+        $maxTotal  = collect($chartData)->max('total') ?? 0;
 
-        return response()->json($chartData);
+        return response()->json(['items' => $chartData, 'max' => $maxTotal]);
     }
 
     /**

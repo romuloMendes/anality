@@ -124,10 +124,11 @@
     @if (count($chartData) > 0)
         <script>
             const chartData = @json($chartData);
+            const serverMax = @json($maxTotal);
 
             const labels = chartData.map(b => b.label);
             const totals = chartData.map(b => b.total);
-            const maxVal = Math.max(...totals);
+            const maxVal = serverMax > 0 ? serverMax : (Math.max(...totals) || 1);
 
             // Cores: vermelho para picos, azul para valores normais
             const bgColors = totals.map(v => {
@@ -173,7 +174,12 @@
                         tooltip: {
                             callbacks: {
                                 title: (items) => 'Semana: ' + items[0].label,
-                                label: (item) => ' ' + item.raw + ' ataque(s)',
+                                label: (item) => {
+                                    const pct = maxVal > 0 ?
+                                        Math.round((item.raw / maxVal) * 100) :
+                                        0;
+                                    return ' Volume: ' + pct + '% de Max (' + item.raw + ' ataques)';
+                                },
                             }
                         }
                     },
@@ -203,9 +209,10 @@
                         },
                         y: {
                             beginAtZero: true,
+                            max: maxVal,
                             title: {
                                 display: true,
-                                text: 'Quantidade de Ataques',
+                                text: 'Quantidade de Ataques (0 – Max)',
                                 color: '#4a6480',
                                 font: {
                                     weight: 'bold',
@@ -213,13 +220,13 @@
                                 }
                             },
                             ticks: {
-                                stepSize: 1,
                                 precision: 0,
                                 color: '#4a6480',
                                 font: {
                                     size: 10,
                                     family: "'Share Tech Mono', monospace"
-                                }
+                                },
+                                callback: (value) => value
                             },
                             grid: {
                                 color: '#1a2d45'
@@ -318,20 +325,20 @@
 
                 fetch(`{{ route('api.charts.attacks-weekly') }}?date_from=${dateFrom}&date_to=${dateTo}`)
                     .then(r => r.json())
-                    .then(data => {
-                        if (data.errors) {
+                    .then(response => {
+                        if (response.errors) {
                             alert('Datas inválidas. Verifique os campos e tente novamente.');
                             return;
                         }
 
+                        const data = response.items;
+                        const newMax = response.max > 0 ? response.max : 1;
                         const chart = Chart.getChart('weeklyAttacksChart');
                         const lineChart = Chart.getChart('weeklyAttacksLineChart');
                         const newLabels = data.map(b => b.label);
                         const newTotals = data.map(b => b.total);
-                        const newMax = Math.max(...newTotals);
 
                         const newColors = newTotals.map(v => {
-                            if (newMax === 0) return 'rgba(0,229,255,0.5)';
                             const ratio = v / newMax;
                             if (ratio >= 0.8) return 'rgba(220, 53, 69, 0.8)';
                             if (ratio >= 0.5) return 'rgba(255, 193, 7, 0.8)';
@@ -339,7 +346,6 @@
                         });
 
                         const newPointColors = newTotals.map(v => {
-                            if (newMax === 0) return 'rgba(13, 110, 253, 0.9)';
                             const ratio = v / newMax;
                             if (ratio >= 0.8) return 'rgba(255,59,92,1)';
                             if (ratio >= 0.5) return 'rgba(255,184,0,1)';
@@ -356,6 +362,7 @@
                         lineChart.data.labels = newLabels;
                         lineChart.data.datasets[0].data = newTotals;
                         lineChart.data.datasets[0].pointBackgroundColor = newPointColors;
+                        lineChart.options.scales.y.max = newMax;
                         lineChart.update();
 
                         // Atualiza a URL sem recarregar

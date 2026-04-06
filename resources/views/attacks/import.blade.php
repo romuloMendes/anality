@@ -229,10 +229,8 @@
                 const formData = new FormData();
                 formData.append('json_file', file);
                 formData.append('import_mode', mode);
-                if (mode === 'normal') {
-                    formData.append('deduplicate_by_date',
-                        document.getElementById('deduplicate_by_date').checked ? '1' : '0');
-                }
+                formData.append('deduplicate_by_date',
+                    document.getElementById('deduplicate_by_date').checked ? '1' : '0');
 
                 document.getElementById('resultArea').innerHTML = '';
                 setProgress(0, 'Enviando arquivo...', '');
