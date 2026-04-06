@@ -90,6 +90,10 @@
             color: var(--text);
         }
 
+        .kpi .kpi-value.blue {
+            color: var(--accent);
+        }
+
         .chart-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -234,6 +238,10 @@
         .badge-alto {
             color: var(--danger);
         }
+
+        .badge-ataques {
+            color: var(--accent);
+        }
     </style>
 @endpush
 
@@ -257,7 +265,7 @@
         <div id="error-msg"></div>
 
         {{-- KPIs --}}
-        <div class="kpis">
+        <div class="kpis" style="grid-template-columns: repeat(5, 1fr);">
             <div class="kpi">
                 <div class="kpi-label">Total de Notícias</div>
                 <div class="kpi-value white" id="kpi-total">—</div>
@@ -274,6 +282,10 @@
                 <div class="kpi-label">Relevância Baixa</div>
                 <div class="kpi-value green" id="kpi-baixo">—</div>
             </div>
+            <div class="kpi">
+                <div class="kpi-label">Total de Ataques</div>
+                <div class="kpi-value blue" id="kpi-ataques">—</div>
+            </div>
         </div>
 
         {{-- Gráfico --}}
@@ -289,6 +301,9 @@
                     </span>
                     <span class="legend-item" data-series="alto" title="Clique para ocultar/exibir">
                         <span class="legend-dot" style="background: rgba(255, 59, 92, 0.9)"></span> Alto (7–10)
+                    </span>
+                    <span class="legend-item" data-series="ataques" title="Clique para ocultar/exibir">
+                        <span class="legend-dot" style="background: rgba(56, 139, 253, 0.9)"></span> Ataques
                     </span>
                 </div>
             </div>
@@ -348,6 +363,11 @@
                     color: 'rgba(255, 59, 92, 0.9)',
                     fill: 'rgba(255, 59, 92, 0.1)'
                 },
+                ataques: {
+                    label: 'Ataques',
+                    color: 'rgba(56, 139, 253, 0.9)',
+                    fill: 'rgba(56, 139, 253, 0.1)'
+                },
             };
 
             // ── Estado ─────────────────────────────────────────────────────
@@ -366,6 +386,7 @@
             const kpiAlto = document.getElementById('kpi-alto');
             const kpiMedio = document.getElementById('kpi-medio');
             const kpiBaixo = document.getElementById('kpi-baixo');
+            const kpiAtaques = document.getElementById('kpi-ataques');
 
             // ── Helpers ────────────────────────────────────────────────────
             function showError(msg) {
@@ -529,9 +550,14 @@
                 let total = 0,
                     alto = 0,
                     medio = 0,
-                    baixo = 0;
+                    baixo = 0,
+                    ataques = 0;
 
                 rows.forEach(row => {
+                    if (row.name === 'ataques') {
+                        ataques += row.total;
+                        return;
+                    }
                     total += row.total;
                     if (row.name === 'alto') alto += row.total;
                     if (row.name === 'medio') medio += row.total;
@@ -542,6 +568,7 @@
                 kpiAlto.textContent = alto.toLocaleString('pt-BR');
                 kpiMedio.textContent = medio.toLocaleString('pt-BR');
                 kpiBaixo.textContent = baixo.toLocaleString('pt-BR');
+                kpiAtaques.textContent = ataques.toLocaleString('pt-BR');
             }
 
             // ── Tabela de dados ────────────────────────────────────────────
@@ -555,7 +582,8 @@
                 const badgeClass = {
                     baixo: 'badge-baixo',
                     medio: 'badge-medio',
-                    alto: 'badge-alto'
+                    alto: 'badge-alto',
+                    ataques: 'badge-ataques'
                 };
 
                 tbody.innerHTML = rows.map(row => `

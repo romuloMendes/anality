@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\HackerAttack;
 use App\Models\News;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -37,8 +38,7 @@ final class NewsRelevanceChartService
      */
     public function generate(Carbon $from, Carbon $to): Collection
     {
-        // Uma única query trazendo contagens por dia + score
-        // minimiza memória e transferência de dados
+        // Query de notícias — contagens por dia + score
         $rows = News::query()
             ->whereBetween('published_date', [
                 $from->toDateString(),
@@ -48,7 +48,19 @@ final class NewsRelevanceChartService
             ->groupBy('day', 'relevance_score')
             ->orderBy('day')
             ->get()
-            ->groupBy('day');         // Collection keyed by date string
+            ->groupBy('day');   // Collection keyed by date string
+
+        // Query de ataques — contagens por dia (lookup O(1))
+        $attackRows = HackerAttack::query()
+            ->whereBetween('attack_date', [
+                $from->toDateString(),
+                $to->toDateString(),
+            ])
+            ->selectRaw('DATE(attack_date) as day, COUNT(*) as total')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get()
+            ->pluck('total', 'day');
 
         $result  = collect();
         $current = $from->copy()->startOfDay();
@@ -64,7 +76,8 @@ final class NewsRelevanceChartService
             $label = $periodStart->format('d/m/Y') . ' - ' . $periodEnd->format('d/m/Y');
 
             // Soma totais para cada nível dentro do bloco
-            $levelTotals = array_fill_keys(array_keys(self::LEVELS), 0);
+            $levelTotals  = array_fill_keys(array_keys(self::LEVELS), 0);
+            $attacksTotal = 0;
 
             $cursor = $periodStart->copy();
             while ($cursor->lte($periodEnd)) {
@@ -79,6 +92,8 @@ final class NewsRelevanceChartService
                     }
                 }
 
+                $attacksTotal += (int) ($attackRows[$dayKey] ?? 0);
+
                 $cursor->addDay();
             }
 
@@ -90,6 +105,13 @@ final class NewsRelevanceChartService
                     'total'           => $levelTotals[$name],
                 ]);
             }
+
+            $result->push([
+                'period'          => $label,
+                'name'            => 'ataques',
+                'relevance_score' => null,
+                'total'           => $attacksTotal,
+            ]);
 
             $current->addDays(7);
         }
@@ -118,7 +140,7 @@ final class NewsRelevanceChartService
         $labels   = $rows->pluck('period')->unique()->values();
         $datasets = [];
 
-        foreach (array_keys(self::LEVELS) as $name) {
+        foreach ([...array_keys(self::LEVELS), 'ataques'] as $name) {
             $datasets[] = [
                 'name' => $name,
                 'data' => $rows
