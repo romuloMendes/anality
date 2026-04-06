@@ -482,6 +482,151 @@ class NewsImportService
         return $result;
     }
 
+    public function importAttacksByAtaquesField(string $jsonContent, string $filename = 'unknown.json', ?int $fileSize = null, bool $deduplicateByDate = false): array
+    {
+        $hashName   = $this->generateHashName();
+        $storedPath = "imports/temp/{$hashName}.json";
+
+        $decoded = json_decode($jsonContent, true);
+
+        $deduplicatedCount = 0;
+        if ($deduplicateByDate && is_array($decoded)) {
+            $seen     = [];
+            $filtered = array_values(array_filter($decoded, function ($item) use (&$seen) {
+                $rawDate = trim($item['data'] ?? ($item['date'] ?? ($item['attack_date'] ?? '')));
+                if ($rawDate === '') {
+                    return true;
+                }
+                try {
+                    $dateKey = Carbon::parse($rawDate)->toDateString();
+                } catch (\Exception $e) {
+                    return true;
+                }
+                if (isset($seen[$dateKey])) {
+                    return false;
+                }
+                $seen[$dateKey] = true;
+                return true;
+            }));
+            $deduplicatedCount = count($decoded) - count($filtered);
+            $decoded           = $filtered;
+            $jsonContent       = json_encode($decoded, JSON_UNESCAPED_UNICODE);
+        }
+
+        $total = is_array($decoded) ? count($decoded) : 0;
+
+        Storage::disk('local')->put($storedPath, $jsonContent);
+
+        $batch = \App\Models\AttackImportBatch::create([
+            'filename'       => $filename,
+            'file_size'      => $fileSize,
+            'total_records'  => $total,
+            'imported_count' => 0,
+            'failed_count'   => 0,
+            'status'         => 'completed',
+        ]);
+
+        $result = $this->importAttacksByAtaquesFieldFromJson($storedPath, $batch->id);
+
+        $batch->update([
+            'imported_count' => $result['imported'] ?? 0,
+            'failed_count'   => $result['failed'] ?? 0,
+        ]);
+
+        Storage::disk('local')->delete($storedPath);
+
+        $result['batch_id']     = $batch->id;
+        $result['mode']         = 'by_ataques';
+        $result['deduplicated'] = $deduplicatedCount;
+
+        return $result;
+    }
+
+    private function importAttacksByAtaquesFieldFromJson(string $storedPath, ?int $batchId = null): array
+    {
+        $imported         = 0;
+        $failed           = 0;
+        $errors           = [];
+        $recordsProcessed = 0;
+        $rowNumber        = 0;
+        // deduplicate_by_date
+        try {
+            $filePath = Str::startsWith($storedPath, ['/', '\\'])
+                ? $storedPath
+                : Storage::disk('local')->path($storedPath);
+
+            if (! File::exists($filePath)) {
+                throw new \Exception('Arquivo JSON não encontrado: ' . $filePath);
+            }
+
+            $decoded = json_decode(File::get($filePath), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('JSON inválido: ' . json_last_error_msg());
+            }
+
+            if (! is_array($decoded)) {
+                throw new \Exception('Formato de JSON inesperado. Deve ser array de objetos.');
+            }
+
+            foreach ($decoded as $item) {
+                $rowNumber++;
+
+                try {
+                    if (! is_array($item)) {
+                        throw new \Exception('Formato de item inválido na linha ' . $rowNumber);
+                    }
+
+                    $rawAtaques = $item['ataques'] ?? null;
+                    if ($rawAtaques === null) {
+                        throw new \Exception('Campo "ataques" ausente');
+                    }
+
+                    // 0.750084 * 100 = 75.0084 → floor → 75
+                    $count = (int) floor((float) $rawAtaques * 100);
+                    if ($count <= 0) {
+                        throw new \Exception('Campo "ataques" resultou em contagem zero ou negativa (' . $rawAtaques . ')');
+                    }
+
+                    for ($i = 0; $i < $count; $i++) {
+                        $this->processAttackData($item, basename($filePath), $batchId);
+                        $imported++;
+                    }
+
+                    $recordsProcessed++;
+                } catch (\Exception $e) {
+                    $failed++;
+                    $errors[] = "Linha {$rowNumber}: " . $e->getMessage();
+                    Log::error("Erro na importação por ataques (linha {$rowNumber})", [
+                        'error' => $e->getMessage(),
+                        'item'  => $item,
+                    ]);
+                }
+            }
+
+            return [
+                'success'           => true,
+                'imported'          => $imported,
+                'records_processed' => $recordsProcessed,
+                'failed'            => $failed,
+                'errors'            => $errors,
+                'total'             => $rowNumber,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erro ao importar ataques por campo ataques', [
+                'error' => $e->getMessage(),
+                'file'  => $storedPath,
+            ]);
+
+            return [
+                'success'  => false,
+                'error'    => $e->getMessage(),
+                'imported' => $imported,
+                'failed'   => $failed,
+            ];
+        }
+    }
+
     private function importAttacksFromJson(string $storedPath, ?int $batchId = null): array
     {
         try {

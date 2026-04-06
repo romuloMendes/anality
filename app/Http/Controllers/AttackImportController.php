@@ -118,12 +118,23 @@ class AttackImportController extends Controller
         try {
             $file        = $request->file('json_file');
             $jsonContent = File::get($file->getPathname());
-            $result      = $this->importService->importAttacksFromJsonString(
-                $jsonContent,
-                $file->getClientOriginalName(),
-                $file->getSize(),
-                $request->boolean('deduplicate_by_date')
-            );
+            $mode        = $request->input('import_mode', 'normal');
+
+            if ($mode === 'by_ataques') {
+                $result = $this->importService->importAttacksByAtaquesField(
+                    $jsonContent,
+                    $file->getClientOriginalName(),
+                    $file->getSize(),
+                    $request->boolean('deduplicate_by_date')
+                );
+            } else {
+                $result = $this->importService->importAttacksFromJsonString(
+                    $jsonContent,
+                    $file->getClientOriginalName(),
+                    $file->getSize(),
+                    $request->boolean('deduplicate_by_date')
+                );
+            }
 
             return response()->json($result, $result['success'] ? 200 : 422);
         } catch (\Exception $e) {

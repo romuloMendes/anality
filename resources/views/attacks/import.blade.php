@@ -100,9 +100,13 @@
                                 </label>
                             </div>
 
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 flex-wrap">
                                 <button type="submit" class="btn btn-primary" id="submitBtn">
                                     <i class="bi bi-upload"></i> Importar Ataques
+                                </button>
+                                <button type="button" class="btn btn-warning" id="submitBtnByAtaques"
+                                    title="Lê o campo &quot;ataques&quot; de cada registro e insere N vezes no banco (ex: 0.750084 → 75 inserções)">
+                                    <i class="bi bi-layers"></i> Importar por campo (ataques)
                                 </button>
                                 <a href="{{ route('attacks-batches.index') }}" class="btn btn-outline-secondary">
                                     <i class="bi bi-clock-history"></i> Histórico de Uploads
@@ -195,8 +199,27 @@
                 document.getElementById('fileInfo').classList.remove('d-none');
             }
 
-            document.getElementById('importForm').addEventListener('submit', function(e) {
-                e.preventDefault();
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressLabel = document.getElementById('progressLabel');
+            const progressPct = document.getElementById('progressPct');
+            const progressSub = document.getElementById('progressSub');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnByAtaques = document.getElementById('submitBtnByAtaques');
+
+            function setProgress(pct, label, sub) {
+                progressBar.style.width = pct + '%';
+                progressPct.textContent = Math.round(pct) + '%';
+                progressLabel.textContent = label;
+                progressSub.textContent = sub;
+            }
+
+            function setButtonsDisabled(disabled) {
+                submitBtn.disabled = disabled;
+                submitBtnByAtaques.disabled = disabled;
+            }
+
+            function doImport(mode) {
                 const file = selectedFile || fileInput.files[0];
                 if (!file) {
                     showResult('error', 'Selecione um arquivo JSON.');
@@ -205,30 +228,19 @@
 
                 const formData = new FormData();
                 formData.append('json_file', file);
-                formData.append('deduplicate_by_date', document.getElementById('deduplicate_by_date').checked ? '1' :
-                    '0');
-
-                const progressContainer = document.getElementById('progressContainer');
-                const progressBar = document.getElementById('progressBar');
-                const progressLabel = document.getElementById('progressLabel');
-                const progressPct = document.getElementById('progressPct');
-                const progressSub = document.getElementById('progressSub');
-                const submitBtn = document.getElementById('submitBtn');
+                formData.append('import_mode', mode);
+                if (mode === 'normal') {
+                    formData.append('deduplicate_by_date',
+                        document.getElementById('deduplicate_by_date').checked ? '1' : '0');
+                }
 
                 document.getElementById('resultArea').innerHTML = '';
                 setProgress(0, 'Enviando arquivo...', '');
                 progressContainer.classList.remove('d-none');
-                submitBtn.disabled = true;
+                setButtonsDisabled(true);
 
                 let serverTimer = null,
                     serverPct = 80;
-
-                function setProgress(pct, label, sub) {
-                    progressBar.style.width = pct + '%';
-                    progressPct.textContent = Math.round(pct) + '%';
-                    progressLabel.textContent = label;
-                    progressSub.textContent = sub;
-                }
 
                 const xhr = new XMLHttpRequest();
 
@@ -251,7 +263,7 @@
 
                 xhr.addEventListener('load', () => {
                     clearInterval(serverTimer);
-                    submitBtn.disabled = false;
+                    setButtonsDisabled(false);
                     progressBar.style.width = '100%';
                     progressPct.textContent = '100%';
                     progressLabel.textContent = 'Concluído!';
@@ -260,8 +272,7 @@
                         try {
                             const result = JSON.parse(xhr.responseText);
                             if (xhr.status === 200 && result.success) showResult('success', result);
-                            else showResult('error', result.error || result.message ||
-                                'Erro ao importar.');
+                            else showResult('error', result.error || result.message || 'Erro ao importar.');
                         } catch (_) {
                             showResult('error', 'Resposta inválida do servidor.');
                         }
@@ -270,7 +281,7 @@
 
                 xhr.addEventListener('error', () => {
                     clearInterval(serverTimer);
-                    submitBtn.disabled = false;
+                    setButtonsDisabled(false);
                     progressContainer.classList.add('d-none');
                     showResult('error', 'Falha na comunicação com o servidor.');
                 });
@@ -279,28 +290,53 @@
                 xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
                 xhr.setRequestHeader('Accept', 'application/json');
                 xhr.send(formData);
+            }
+
+            document.getElementById('importForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                doImport('normal');
+            });
+
+            submitBtnByAtaques.addEventListener('click', function() {
+                doImport('by_ataques');
             });
 
             function showResult(type, data) {
                 const area = document.getElementById('resultArea');
                 if (type === 'success') {
                     const failed = data.failed ?? 0;
-                    const total = data.total ?? (data.imported + failed);
-                    const dedup = data.deduplicated ?? 0;
-                    const dedupCol = dedup > 0 ?
-                        `<div class="col-3"><h5 style="color:var(--warning,#ffc107)">${dedup}</h5><small>Deduplicados</small></div>` :
-                        '';
-                    const colSize = dedup > 0 ? 'col-3' : 'col-4';
+                    let statsHtml = '';
                     const errs = data.errors?.length ?
                         `<hr><ul class="small mb-0">${data.errors.map(e=>`<li>${e}</li>`).join('')}</ul>` : '';
+
+                    if (data.mode === 'by_ataques') {
+                        const records = data.records_processed ?? 0;
+                        const inserted = data.imported ?? 0;
+                        const total = data.total ?? 0;
+                        statsHtml = `<div class="row text-center mt-3">
+                            <div class="col-3"><h5 style="color:var(--ok)">${inserted}</h5><small>Linhas inseridas</small></div>
+                            <div class="col-3"><h5 style="color:var(--accent)">${records}</h5><small>Registros JSON</small></div>
+                            <div class="col-3"><h5 style="color:var(--danger)">${failed}</h5><small>Falhados</small></div>
+                            <div class="col-3"><h5 style="color:var(--muted)">${total}</h5><small>Total JSON</small></div>
+                        </div>`;
+                    } else {
+                        const total = data.total ?? (data.imported + failed);
+                        const dedup = data.deduplicated ?? 0;
+                        const dedupCol = dedup > 0 ?
+                            `<div class="col-3"><h5 style="color:var(--warning,#ffc107)">${dedup}</h5><small>Deduplicados</small></div>` :
+                            '';
+                        const colSize = dedup > 0 ? 'col-3' : 'col-4';
+                        statsHtml = `<div class="row text-center mt-3">
+                            <div class="${colSize}"><h5 style="color:var(--ok)">${data.imported}</h5><small>Importados</small></div>
+                            <div class="${colSize}"><h5 style="color:var(--danger)">${failed}</h5><small>Falhados</small></div>
+                            ${dedupCol}
+                            <div class="${colSize}"><h5 style="color:var(--accent)">${total}</h5><small>Total</small></div>
+                        </div>`;
+                    }
+
                     area.innerHTML = `<div class="alert alert-success alert-dismissible fade show mt-4">
                     <i class="bi bi-check-circle"></i> <strong>Sucesso!</strong>
-                    <div class="row text-center mt-3">
-                        <div class="${colSize}"><h5 style="color:var(--ok)">${data.imported}</h5><small>Importados</small></div>
-                        <div class="${colSize}"><h5 style="color:var(--danger)">${failed}</h5><small>Falhados</small></div>
-                        ${dedupCol}
-                        <div class="${colSize}"><h5 style="color:var(--accent)">${total}</h5><small>Total</small></div>
-                    </div>${errs}
+                    ${statsHtml}${errs}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
                 } else {
                     area.innerHTML = `<div class="alert alert-danger alert-dismissible fade show mt-4">
