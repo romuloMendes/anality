@@ -6,6 +6,7 @@ use App\Http\Controllers\AttackImportBatchController;
 use App\Http\Controllers\AttackReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NewsImportController;
+use App\Http\Controllers\NewsRelevanceChartController;
 use Illuminate\Support\Facades\Route;
 
 // Dashboard e visualizações
@@ -53,3 +54,7 @@ Route::prefix('api/reports/attacks')->group(function () {
     Route::get('/export/weekly', [AttackReportController::class, 'exportWeekly'])->name('export-report-attacks-weekly');
     Route::get('/period-news', [AttackReportController::class, 'periodNews'])->name('report-attacks-period-news');
 });
+
+// Relatório de notícias por relevância
+Route::get('/report/news/relevance', [NewsRelevanceChartController::class, 'index'])->name('report-news-relevance');
+Route::get('/api/reports/news/relevance-chart', [NewsRelevanceChartController::class, 'data'])->name('api.report-news-relevance');

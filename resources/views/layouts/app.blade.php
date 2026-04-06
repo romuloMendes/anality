@@ -99,7 +99,7 @@
 
                     {{-- Relatórios --}}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {{ request()->routeIs('report-attacks-view', 'report-attacks-chart') ? 'active' : '' }}"
+                        <a class="nav-link dropdown-toggle {{ request()->routeIs('report-attacks-view', 'report-attacks-chart', 'report-news-relevance') ? 'active' : '' }}"
                             href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
                             <i class="bi bi-file-earmark-bar-graph"></i> Relatórios
@@ -115,6 +115,12 @@
                                 <a class="dropdown-item {{ request()->routeIs('report-attacks-chart') ? 'active' : '' }}"
                                     href="{{ route('report-attacks-chart') }}">
                                     <i class="bi bi-pie-chart me-2"></i> Gráfico de Ataques
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('report-news-relevance') ? 'active' : '' }}"
+                                    href="{{ route('report-news-relevance') }}">
+                                    <i class="bi bi-newspaper me-2"></i> Notícias por Relevância
                                 </a>
                             </li>
                         </ul>
